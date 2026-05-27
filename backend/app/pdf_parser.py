@@ -3,40 +3,33 @@ import pdfplumber
 from collections import defaultdict
 
 
-def extraire_commande(pdf_chemin: str) -> dict:
-    """
-    Lit un bon de commande PDF (format Tribeca/Winners)
-    et retourne un dictionnaire structuré.
-    """
-    with pdfplumber.open(pdf_chemin) as pdf:
-        page = pdf.pages[0]
-        texte = page.extract_text()
-        tableaux = page.extract_tables()
-        words = page.extract_words()
+def detecter_format(texte: str) -> str:
+    """Détecte le format du PDF."""
+    if "PURCHASE ORDER" in texte or "Order NO." in texte:
+        return "purchase_order"
+    if "Bon de commande" in texte or "EAN principal" in texte:
+        return "tribeca"
+    return "inconnu"
 
+
+def extraire_tribeca(texte: str, tableaux: list, words: list) -> dict:
+    """Format Tribeca/Winners — avec EAN-13."""
     resultat = {
-        "numero_commande": None,
-        "client": None,
-        "email_client": None,
-        "telephone_client": None,
-        "date_commande": None,
-        "date_livraison": None,
+        "numero_commande": None, "client": None, "email_client": None,
+        "telephone_client": None, "date_commande": None, "date_livraison": None,
         "produits": []
     }
 
     texte_propre = re.sub(r'([A-Za-z°])\1', r'\1', texte)
 
     m = re.search(r'commande\s+(\d{5,})\s+Date', texte_propre)
-    if m:
-        resultat["numero_commande"] = m.group(1)
+    if m: resultat["numero_commande"] = m.group(1)
 
     m = re.search(r'Date de commande\s+(\d{2}/\d{2}/\d{4})', texte_propre)
-    if m:
-        resultat["date_commande"] = m.group(1)
+    if m: resultat["date_commande"] = m.group(1)
 
     m = re.search(r'livraison imp.rative\s+(\d{2}/\d{2}/\d{4})', texte_propre)
-    if m:
-        resultat["date_livraison"] = m.group(1)
+    if m: resultat["date_livraison"] = m.group(1)
 
     if tableaux:
         bloc = tableaux[0][1][1] if len(tableaux[0]) > 1 and len(tableaux[0][1]) > 1 else ""
@@ -54,9 +47,7 @@ def extraire_commande(pdf_chemin: str) -> dict:
         y = round(w['top'] / 5) * 5
         lignes_mots[y].append(w['text'])
 
-    # Pattern standard : N°article EAN libellé nb pcb qtéAr
     pattern_std = re.compile(r'\d{6}\s+(\d{13})\s+(.+?)\s+\d+\s+\d+\s+(\d+)Ar')
-    # Pattern inversé  : libellé N°article EAN nb pcb qtéAr
     pattern_inv = re.compile(r'^(.+?)\s+\d{6}\s+(\d{13})\s+\d+\s+\d+\s+(\d+)Ar')
 
     refs_vus = set()
@@ -67,7 +58,6 @@ def extraire_commande(pdf_chemin: str) -> dict:
         y = lignes_triees[i]
         ligne = " ".join(lignes_mots[y])
 
-        # Cas inversé
         m_inv = pattern_inv.search(ligne)
         ean_inv = re.search(r'\d{6}\s+(\d{13})', ligne)
         if m_inv and ean_inv and ean_inv.group(1) not in refs_vus:
@@ -88,7 +78,6 @@ def extraire_commande(pdf_chemin: str) -> dict:
             i += 1
             continue
 
-        # Cas standard
         m_std = pattern_std.search(ligne)
         if m_std and m_std.group(1) not in refs_vus:
             refs_vus.add(m_std.group(1))
@@ -110,6 +99,68 @@ def extraire_commande(pdf_chemin: str) -> dict:
         i += 1
 
     return resultat
+
+
+def extraire_purchase_order(texte: str) -> dict:
+    """Format Purchase Order (hôtels, restaurants...)"""
+    resultat = {
+        "numero_commande": None, "client": None, "email_client": None,
+        "telephone_client": None, "date_commande": None, "date_livraison": None,
+        "produits": []
+    }
+
+    m = re.search(r'Order NO\.\s*:\s*([\w\s]+?)(?:\n|DATE)', texte)
+    if m: resultat["numero_commande"] = m.group(1).strip()
+
+    m = re.search(r'^TO\s+(.+?)(?:Order NO\.)', texte, re.MULTILINE)
+    if m: resultat["client"] = m.group(1).strip()
+
+    m = re.search(r'Phone:(\d+)', texte)
+    if m: resultat["telephone_client"] = m.group(1).strip()
+
+    m = re.search(r'DATE\s*:\s*(\d{2}/\d{2}/\d{4})', texte)
+    if m: resultat["date_commande"] = m.group(1)
+
+    m = re.search(r'Delivery Date\s*:\s*(\d{2}/\d{2}/\d{4})', texte)
+    if m: resultat["date_livraison"] = m.group(1)
+
+    pattern = re.compile(r'^\d+\s+\d+\s+(.+?)\s+(\d+(?:\.\d+)?)\s+EA\s', re.MULTILINE)
+    for m in pattern.finditer(texte):
+        nom = m.group(1).strip()
+        try:
+            qte = int(float(m.group(2)))
+        except:
+            qte = 0
+        resultat["produits"].append({
+            "ean": None,
+            "nom": nom,
+            "quantite": qte,
+            "fait": False
+        })
+
+    return resultat
+
+
+def extraire_commande(pdf_chemin: str) -> dict:
+    """
+    Lit un bon de commande PDF et retourne un dictionnaire structuré.
+    Supporte plusieurs formats : Tribeca/Winners, Purchase Order (hôtels).
+    """
+    with pdfplumber.open(pdf_chemin) as pdf:
+        page = pdf.pages[0]
+        texte = page.extract_text()
+        tableaux = page.extract_tables()
+        words = page.extract_words()
+
+    format_pdf = detecter_format(texte)
+
+    if format_pdf == "tribeca":
+        return extraire_tribeca(texte, tableaux, words)
+    elif format_pdf == "purchase_order":
+        return extraire_purchase_order(texte)
+    else:
+        # Format inconnu — tentative d'extraction générique
+        return extraire_purchase_order(texte)
 
 
 if __name__ == "__main__":
