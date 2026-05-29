@@ -183,8 +183,7 @@ export default function Kanban() {
                   <div className="modal-num">Réf. client : {commandeActive.numero_commande}</div>
                 )}
               </div>
-              <button className="modal-close" onClick={() => setCommandeActive(null)}>✕</button>
-            </div>
+<button className="modal-close" onClick={(e) => { e.stopPropagation(); setCommandeActive(null); }}>✕</button>            </div>
 
             <div className="modal-infos">
               {commandeActive.date_livraison && (
