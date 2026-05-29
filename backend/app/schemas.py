@@ -35,7 +35,6 @@ class CommandeBase(BaseModel):
     numero_commande:  Optional[str] = None
     date_commande:    Optional[str] = None
     date_livraison:   Optional[str] = None
-    montant_total:    Optional[int] = None
 
 
 class CommandeCreate(CommandeBase):
