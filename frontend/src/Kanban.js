@@ -179,8 +179,7 @@ if (chargement) return <div className="chargement">Chargement des commandes...</
           </div>
 
           <div className="panel-infos">
-            {commandeActive.date_livraison && <div className="panel-info-pill">📅 Livraison : {commandeActive.date_livraison}</div>}
-            {commandeActive.email_client && <div className="panel-info-pill">✉️ {commandeActive.email_client}</div>}
+<div className="panel-info-pill">📅 Livraison prévue : {commandeActive.date_livraison || dateLivraisonPrevue(commandeActive.date_reception)}</div>            {commandeActive.email_client && <div className="panel-info-pill">✉️ {commandeActive.email_client}</div>}
             {commandeActive.telephone_client && <div className="panel-info-pill">📞 {commandeActive.telephone_client}</div>}
             {commandeActive.pdf_nom && <div className="panel-info-pill">📄 {commandeActive.pdf_nom}</div>}
           </div>
