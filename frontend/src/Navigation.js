@@ -17,7 +17,7 @@ export default function Navigation({ page, setPage }) {
           className={`nav-btn ${page === 'kanban' ? 'active' : ''}`}
           onClick={() => setPage('kanban')}
         >
-          📋 Kanban
+          📋 Commandes
         </button>
         <button
           className={`nav-btn ${page === 'dashboard' ? 'active' : ''}`}
