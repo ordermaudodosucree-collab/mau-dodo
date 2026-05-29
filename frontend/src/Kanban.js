@@ -13,20 +13,25 @@ const STATUTS = [
 ];
 
 export default function Kanban() {
-  const [commandes, setCommandes]   = useState([]);
-  const [recherche, setRecherche]   = useState('');
-  const [chargement, setChargement] = useState(true);
+  const [commandes, setCommandes]       = useState([]);
+  const [recherche, setRecherche]       = useState('');
+  const [chargement, setChargement]     = useState(true);
+  const [commandeActive, setCommandeActive] = useState(null);
 
   const chargerCommandes = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/commandes`);
       setCommandes(res.data);
+      if (commandeActive) {
+        const updated = res.data.find(c => c.id === commandeActive.id);
+        if (updated) setCommandeActive(updated);
+      }
     } catch (e) {
       toast.error('Impossible de charger les commandes');
     } finally {
       setChargement(false);
     }
-  }, []);
+  }, [commandeActive]);
 
   useEffect(() => { chargerCommandes(); }, [chargerCommandes]);
 
@@ -35,9 +40,7 @@ export default function Kanban() {
     const ws = new WebSocket(`${wsUrl}/ws`);
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data);
-      if (msg.type === 'nouvelle_commande') {
-        toast.success(`Nouvelle commande : ${msg.reference} !`);
-      }
+      if (msg.type === 'nouvelle_commande') toast.success(`Nouvelle commande : ${msg.reference} !`);
       chargerCommandes();
     };
     return () => ws.close();
@@ -47,6 +50,7 @@ export default function Kanban() {
     try {
       await axios.patch(`${API}/commandes/${reference}/statut`, { statut: nouveauStatut });
       toast.success('Statut mis à jour !');
+      setCommandeActive(null);
       chargerCommandes();
     } catch (e) {
       toast.error('Erreur lors du changement de statut');
@@ -88,10 +92,13 @@ export default function Kanban() {
     return null;
   };
 
+  const statutInfo = (key) => STATUTS.find(s => s.key === key);
+
   if (chargement) return <div className="chargement">Chargement des commandes...</div>;
 
   return (
     <div className="kanban">
+      {/* HEADER */}
       <div className="header">
         <div className="logo-wrap">
           <img src={logo} alt="Mau Dodo Sucrée" className="logo-img" />
@@ -106,6 +113,7 @@ export default function Kanban() {
         </div>
       </div>
 
+      {/* RECHERCHE */}
       <div className="searchbar">
         <span>🔍</span>
         <input
@@ -114,73 +122,137 @@ export default function Kanban() {
           value={recherche}
           onChange={e => setRecherche(e.target.value)}
         />
-        {recherche && (
-          <button className="clear-btn" onClick={() => setRecherche('')}>✕</button>
-        )}
+        {recherche && <button className="clear-btn" onClick={() => setRecherche('')}>✕</button>}
       </div>
 
-      {STATUTS.map(statut => {
-        const cartes = commandesDuStatut(statut.key);
-        const action = prochainStatut(statut.key);
-        return (
-          <div className={`colonne ${statut.classe}`} key={statut.key}>
-            <div className="col-header">
-              <span className="col-titre">{statut.label}</span>
-              <span className={`badge ${statut.badge}`}>{cartes.length}</span>
-            </div>
-            {cartes.length === 0 && <div className="vide">Aucune commande</div>}
-            {cartes.map(commande => {
-              const pct = progression(commande);
-              const tousCoches = pct === 100;
-              return (
-                <div className={`carte ${tousCoches ? 'carte-done' : ''}`} key={commande.id}>
-                  <div className="carte-top">
-                    <span className="ref-badge">#{commande.reference}</span>
-                    <span className="carte-date">
-                      {commande.date_livraison ? `Livraison : ${commande.date_livraison}` : new Date(commande.date_reception).toLocaleDateString('fr-FR')}
-                    </span>
-                  </div>
-                  <div className="carte-client">{commande.client}</div>
-                  {commande.numero_commande && <div className="carte-num">Réf. client : {commande.numero_commande}</div>}
-                  {commande.pdf_nom && <div className="attach-row">📄 {commande.pdf_nom}</div>}
-                  <div className="produits">
-                    <div className="produit-header">
-                      <span></span><span>Produit</span><span>EAN</span><span>Qté</span>
+      {/* COLONNES HORIZONTALES */}
+      <div className="colonnes">
+        {STATUTS.map(statut => {
+          const cartes = commandesDuStatut(statut.key);
+          return (
+            <div className={`colonne ${statut.classe}`} key={statut.key}>
+              <div className="col-header">
+                <span className="col-titre">{statut.label}</span>
+                <span className={`badge ${statut.badge}`}>{cartes.length}</span>
+              </div>
+              {cartes.length === 0 && <div className="vide">Aucune commande</div>}
+              {cartes.map(commande => {
+                const pct = progression(commande);
+                return (
+                  <div
+                    className={`carte ${pct === 100 ? 'carte-done' : ''}`}
+                    key={commande.id}
+                    onClick={() => setCommandeActive(commande)}
+                  >
+                    <div className="carte-top">
+                      <span className="ref-badge">#{commande.reference}</span>
+                      <span className="carte-date">
+                        {commande.date_livraison ? `📅 ${commande.date_livraison}` : new Date(commande.date_reception).toLocaleDateString('fr-FR')}
+                      </span>
                     </div>
-                    {commande.produits?.map(produit => (
-                      <div className="produit-row" key={produit.id}>
-                        <input type="checkbox" checked={produit.fait} onChange={e => toggleProduit(produit.id, e.target.checked)} />
-                        <span className={`produit-nom ${produit.fait ? 'fait' : ''}`}>{produit.nom}</span>
-                        <span className={`produit-ean ${produit.fait ? 'fait' : ''}`}>{produit.ean || '—'}</span>
-                        <span className={`produit-qte ${produit.fait ? 'fait' : ''}`}>×{produit.quantite}</span>
+                    <div className="carte-client">{commande.client}</div>
+                    {commande.numero_commande && <div className="carte-num">Réf. : {commande.numero_commande}</div>}
+                    <div className="prog-wrap">
+                      <div className="prog-labels">
+                        <span className="prog-txt">{commande.produits?.length || 0} produits</span>
+                        <span className="prog-pct">{pct}%</span>
                       </div>
-                    ))}
-                  </div>
-                  <div className="prog-wrap">
-                    <div className="prog-labels">
-                      <span className="prog-txt">Progression</span>
-                      <span className="prog-pct">{pct}%</span>
+                      <div className="prog-bar">
+                        <div className="prog-fill" style={{ width: `${pct}%`, background: statut.couleur }} />
+                      </div>
                     </div>
-                    <div className="prog-bar">
-                      <div className="prog-fill" style={{ width: `${pct}%`, background: statut.couleur }} />
-                    </div>
+                    {pct === 100 && <div className="all-done-mini">✅ Prêt !</div>}
+                    <div className="carte-hint">Cliquer pour voir les détails →</div>
                   </div>
-                  {tousCoches && <div className="all-done">✅ Tous les produits prêts !</div>}
-                  {statut.key === 'livraison' && <div className="livraison-badge">📍 En route</div>}
-                  {action && (
-                    <button
-                      className={`action-btn ${statut.key === 'recu' ? 'btn-brun' : 'btn-outline'}`}
-                      onClick={() => changerStatut(commande.reference, action.next)}
-                    >
-                      {action.label}
-                    </button>
-                  )}
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* MODAL — DÉTAIL COMMANDE */}
+      {commandeActive && (
+        <div className="modal-overlay" onClick={() => setCommandeActive(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-ref">#{commandeActive.reference}</div>
+                <div className="modal-client">{commandeActive.client}</div>
+                {commandeActive.numero_commande && (
+                  <div className="modal-num">Réf. client : {commandeActive.numero_commande}</div>
+                )}
+              </div>
+              <button className="modal-close" onClick={() => setCommandeActive(null)}>✕</button>
+            </div>
+
+            <div className="modal-infos">
+              {commandeActive.date_livraison && (
+                <div className="modal-info-pill">📅 Livraison : {commandeActive.date_livraison}</div>
+              )}
+              {commandeActive.email_client && (
+                <div className="modal-info-pill">✉️ {commandeActive.email_client}</div>
+              )}
+              {commandeActive.telephone_client && (
+                <div className="modal-info-pill">📞 {commandeActive.telephone_client}</div>
+              )}
+              {commandeActive.pdf_nom && (
+                <div className="modal-info-pill">📄 {commandeActive.pdf_nom}</div>
+              )}
+            </div>
+
+            {/* PRODUITS */}
+            <div className="modal-produits">
+              <div className="produit-header">
+                <span></span>
+                <span>Produit</span>
+                <span>EAN</span>
+                <span>Qté</span>
+              </div>
+              {commandeActive.produits?.map(produit => (
+                <div className="produit-row" key={produit.id}>
+                  <input
+                    type="checkbox"
+                    checked={produit.fait}
+                    onChange={e => toggleProduit(produit.id, e.target.checked)}
+                  />
+                  <span className={`produit-nom ${produit.fait ? 'fait' : ''}`}>{produit.nom}</span>
+                  <span className={`produit-ean ${produit.fait ? 'fait' : ''}`}>{produit.ean || '—'}</span>
+                  <span className={`produit-qte ${produit.fait ? 'fait' : ''}`}>×{produit.quantite}</span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+
+            {/* PROGRESSION */}
+            <div className="prog-wrap" style={{marginTop: '1rem'}}>
+              <div className="prog-labels">
+                <span className="prog-txt">Progression</span>
+                <span className="prog-pct">{progression(commandeActive)}%</span>
+              </div>
+              <div className="prog-bar">
+                <div className="prog-fill" style={{
+                  width: `${progression(commandeActive)}%`,
+                  background: statutInfo(commandeActive.statut)?.couleur || '#5C3317'
+                }} />
+              </div>
+            </div>
+
+            {progression(commandeActive) === 100 && (
+              <div className="all-done">✅ Tous les produits prêts !</div>
+            )}
+
+            {/* BOUTON ACTION */}
+            {prochainStatut(commandeActive.statut) && (
+              <button
+                className={`action-btn ${commandeActive.statut === 'recu' ? 'btn-brun' : 'btn-outline'}`}
+                onClick={() => changerStatut(commandeActive.reference, prochainStatut(commandeActive.statut).next)}
+              >
+                {prochainStatut(commandeActive.statut).label}
+              </button>
+            )}
           </div>
-        );
-      })}
+        </div>
+      )}
     </div>
   );
 }
