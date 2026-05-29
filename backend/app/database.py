@@ -62,32 +62,32 @@ class Produit(Base):
     # ──────────────────────────────────────────
     # TABLE : stocks
     # ──────────────────────────────────────────
-    class Stock(Base):
-        __tablename__ = "stocks"
+class Stock(Base):
+    __tablename__ = "stocks"
 
-        id = Column(Integer, primary_key=True, index=True)
-        ean = Column(String, nullable=True, index=True)
-        nom = Column(String, nullable=False, unique=True)
-        quantite = Column(Integer, default=0)
-        seuil_alerte = Column(Integer, default=50)
-        date_maj = Column(DateTime, default=func.now(), onupdate=func.now())
+    id = Column(Integer, primary_key=True, index=True)
+    ean = Column(String, nullable=True, index=True)
+    nom = Column(String, nullable=False, unique=True)
+    quantite = Column(Integer, default=0)
+    seuil_alerte = Column(Integer, default=50)
+    date_maj = Column(DateTime, default=func.now(), onupdate=func.now())
 
-        mouvements = relationship("MouvementStock", back_populates="stock", cascade="all, delete")
+    mouvements = relationship("MouvementStock", back_populates="stock", cascade="all, delete")
 
     # ──────────────────────────────────────────
     # TABLE : mouvements_stock
     # ──────────────────────────────────────────
-    class MouvementStock(Base):
-        __tablename__ = "mouvements_stock"
+class MouvementStock(Base):
+    __tablename__ = "mouvements_stock"
 
-        id = Column(Integer, primary_key=True, index=True)
-        stock_id = Column(Integer, ForeignKey("stocks.id"), nullable=False)
-        type = Column(String, nullable=False)  # "entree" | "sortie"
-        quantite = Column(Integer, nullable=False)
-        motif = Column(String, nullable=True)  # ex: "CMD-0042" ou "ajout manuel"
-        date = Column(DateTime, default=func.now())
+    id = Column(Integer, primary_key=True, index=True)
+    stock_id = Column(Integer, ForeignKey("stocks.id"), nullable=False)
+    type = Column(String, nullable=False)  # "entree" | "sortie"
+    quantite = Column(Integer, nullable=False)
+    motif = Column(String, nullable=True)  # ex: "CMD-0042" ou "ajout manuel"
+    date = Column(DateTime, default=func.now())
 
-        stock = relationship("Stock", back_populates="mouvements")
+    stock = relationship("Stock", back_populates="mouvements")
 
 
 # ──────────────────────────────────────────
