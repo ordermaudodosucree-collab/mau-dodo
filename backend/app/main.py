@@ -21,9 +21,21 @@ STORAGE_DIR = "storage/commandes"
 os.makedirs(STORAGE_DIR, exist_ok=True)
 
 # Créer les tables au démarrage
+import threading
+
 @app.on_event("startup")
 def startup():
     init_db()
+    # Lancer le watcher Gmail en arrière-plan
+    if os.getenv("GMAIL_ADDRESS") and os.getenv("GMAIL_APP_PASSWORD"):
+        def lancer_watcher():
+            import time
+            from .email_watcher import verifier_nouveaux_emails
+            while True:
+                verifier_nouveaux_emails()
+                time.sleep(120)
+        thread = threading.Thread(target=lancer_watcher, daemon=True)
+        thread.start()
 
 # CORS — permet au frontend React (Vercel) de communiquer avec ce backend
 app.add_middleware(
