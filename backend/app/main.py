@@ -3,7 +3,7 @@ import shutil
 import json
 from typing import List, Optional
 
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -87,6 +87,10 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.get("/")
 def root():
     return {"message": "Mau Dodo Sucrée API opérationnelle 🍬"}
+
+@app.head("/")
+def root_head():
+    return Response(status_code=200)
 
 
 @app.get("/commandes", response_model=List[schemas.Commande])
