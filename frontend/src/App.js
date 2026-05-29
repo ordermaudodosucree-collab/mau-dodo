@@ -3,6 +3,7 @@ import Navigation from './Navigation';
 import Kanban from './Kanban';
 import Dashboard from './Dashboard';
 import Stocks from './Stocks';
+import Historique from './Historique';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 
@@ -13,9 +14,10 @@ function App() {
     <div className="App">
       <Toaster position="top-right" />
       <Navigation page={page} setPage={setPage} />
-      {page === 'kanban'    && <Kanban />}
-      {page === 'dashboard' && <Dashboard />}
-      {page === 'stocks'    && <Stocks />}
+      {page === 'kanban'     && <Kanban />}
+      {page === 'dashboard'  && <Dashboard />}
+      {page === 'stocks'     && <Stocks />}
+      {page === 'historique' && <Historique />}
     </div>
   );
 }
