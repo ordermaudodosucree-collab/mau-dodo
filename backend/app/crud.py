@@ -187,8 +187,7 @@ def get_dashboard_stats(db: Session, periode: str = "mois"):
     livraisons_total = db.query(database.Commande).filter(
         database.Commande.statut == "livre").all()
     livraisons_periode = db.query(database.Commande).filter(
-        database.Commande.statut == "livre",
-        database.Commande.date_statut >= debut).all()
+        database.Commande.statut == "livre").all()
 
     ca_total = sum(c.montant_total or 0 for c in toutes)
     ca_periode = sum(c.montant_total or 0 for c in periode_commandes)

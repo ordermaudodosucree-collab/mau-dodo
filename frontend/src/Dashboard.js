@@ -22,7 +22,12 @@ export default function Dashboard() {
     }
   }, [periode]);
 
-  useEffect(() => { chargerStats(); }, [chargerStats]);
+useEffect(() => {
+  chargerStats();
+  // Rafraîchissement automatique toutes les 30 secondes
+  const interval = setInterval(chargerStats, 30000);
+  return () => clearInterval(interval);
+}, [chargerStats]);
 
   const formatCA = (montant) => {
     if (!montant) return '0 MUR';
