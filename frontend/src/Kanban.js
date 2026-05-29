@@ -92,7 +92,6 @@ export default function Kanban() {
 
   return (
     <div className="kanban">
-      {/* HEADER */}
       <div className="header">
         <div className="logo-wrap">
           <img src={logo} alt="Mau Dodo Sucrée" className="logo-img" />
@@ -107,9 +106,8 @@ export default function Kanban() {
         </div>
       </div>
 
-      {/* RECHERCHE */}
       <div className="searchbar">
-        <span className="search-icon">🔍</span>
+        <span>🔍</span>
         <input
           type="text"
           placeholder="Rechercher par référence, client, produit ou EAN…"
@@ -121,75 +119,43 @@ export default function Kanban() {
         )}
       </div>
 
-      {/* COLONNES VERTICALES */}
       {STATUTS.map(statut => {
         const cartes = commandesDuStatut(statut.key);
         const action = prochainStatut(statut.key);
-
         return (
           <div className={`colonne ${statut.classe}`} key={statut.key}>
             <div className="col-header">
               <span className="col-titre">{statut.label}</span>
               <span className={`badge ${statut.badge}`}>{cartes.length}</span>
             </div>
-
             {cartes.length === 0 && <div className="vide">Aucune commande</div>}
-
             {cartes.map(commande => {
               const pct = progression(commande);
               const tousCoches = pct === 100;
-
               return (
                 <div className={`carte ${tousCoches ? 'carte-done' : ''}`} key={commande.id}>
                   <div className="carte-top">
                     <span className="ref-badge">#{commande.reference}</span>
                     <span className="carte-date">
-                      {commande.date_livraison
-                        ? `Livraison : ${commande.date_livraison}`
-                        : new Date(commande.date_reception).toLocaleDateString('fr-FR')}
+                      {commande.date_livraison ? `Livraison : ${commande.date_livraison}` : new Date(commande.date_reception).toLocaleDateString('fr-FR')}
                     </span>
                   </div>
-
                   <div className="carte-client">{commande.client}</div>
-                  {commande.numero_commande && (
-                    <div className="carte-num">Réf. client : {commande.numero_commande}</div>
-                  )}
-
-                  {commande.pdf_nom && (
-                    <div className="attach-row">
-                      📄 {commande.pdf_nom}
-                    </div>
-                  )}
-
-                  {/* PRODUITS AVEC EAN */}
+                  {commande.numero_commande && <div className="carte-num">Réf. client : {commande.numero_commande}</div>}
+                  {commande.pdf_nom && <div className="attach-row">📄 {commande.pdf_nom}</div>}
                   <div className="produits">
                     <div className="produit-header">
-                      <span></span>
-                      <span>Produit</span>
-                      <span>EAN</span>
-                      <span>Qté</span>
+                      <span></span><span>Produit</span><span>EAN</span><span>Qté</span>
                     </div>
                     {commande.produits?.map(produit => (
                       <div className="produit-row" key={produit.id}>
-                        <input
-                          type="checkbox"
-                          checked={produit.fait}
-                          onChange={e => toggleProduit(produit.id, e.target.checked)}
-                        />
-                        <span className={`produit-nom ${produit.fait ? 'fait' : ''}`}>
-                          {produit.nom}
-                        </span>
-                        <span className={`produit-ean ${produit.fait ? 'fait' : ''}`}>
-                          {produit.ean || '—'}
-                        </span>
-                        <span className={`produit-qte ${produit.fait ? 'fait' : ''}`}>
-                          ×{produit.quantite}
-                        </span>
+                        <input type="checkbox" checked={produit.fait} onChange={e => toggleProduit(produit.id, e.target.checked)} />
+                        <span className={`produit-nom ${produit.fait ? 'fait' : ''}`}>{produit.nom}</span>
+                        <span className={`produit-ean ${produit.fait ? 'fait' : ''}`}>{produit.ean || '—'}</span>
+                        <span className={`produit-qte ${produit.fait ? 'fait' : ''}`}>×{produit.quantite}</span>
                       </div>
                     ))}
                   </div>
-
-                  {/* PROGRESSION */}
                   <div className="prog-wrap">
                     <div className="prog-labels">
                       <span className="prog-txt">Progression</span>
@@ -199,15 +165,8 @@ export default function Kanban() {
                       <div className="prog-fill" style={{ width: `${pct}%`, background: statut.couleur }} />
                     </div>
                   </div>
-
-                  {tousCoches && (
-                    <div className="all-done">✅ Tous les produits prêts !</div>
-                  )}
-
-                  {statut.key === 'livraison' && (
-                    <div className="livraison-badge">📍 En route</div>
-                  )}
-
+                  {tousCoches && <div className="all-done">✅ Tous les produits prêts !</div>}
+                  {statut.key === 'livraison' && <div className="livraison-badge">📍 En route</div>}
                   {action && (
                     <button
                       className={`action-btn ${statut.key === 'recu' ? 'btn-brun' : 'btn-outline'}`}
