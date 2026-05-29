@@ -1,8 +1,10 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, func
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship
-
 import os
+
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./mau_dodo.db")
+
+# Render utilise postgres:// mais SQLAlchemy a besoin de postgresql://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 engine = create_engine(
     DATABASE_URL,
