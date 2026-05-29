@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import logo from './logo.png';
@@ -16,51 +16,51 @@ export default function Kanban() {
   const [commandes, setCommandes]           = useState([]);
   const [recherche, setRecherche]           = useState('');
   const [chargement, setChargement]         = useState(true);
-  const [commandeActive, setCommandeActive] = useState(null);
+  const [activeId, setActiveId]             = useState(null);
+  const intervalRef                         = useRef(null);
 
   const chargerCommandes = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/commandes`);
       setCommandes(res.data);
-      if (commandeActive) {
-        const updated = res.data.find(c => c.id === commandeActive.id);
-        if (updated) setCommandeActive(updated);
-      }
     } catch (e) {
       toast.error('Impossible de charger les commandes');
     } finally {
       setChargement(false);
     }
-  }, [commandeActive]);
-
-  useEffect(() => { chargerCommandes(); }, [chargerCommandes]);
+  }, []);
 
   useEffect(() => {
-    const wsUrl = API.replace('https://', 'wss://').replace('http://', 'ws://');
-    const ws = new WebSocket(`${wsUrl}/ws`);
-    ws.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      if (msg.type === 'nouvelle_commande') toast.success(`Nouvelle commande : ${msg.reference} !`);
-      chargerCommandes();
-    };
-    return () => ws.close();
+    chargerCommandes();
+    intervalRef.current = setInterval(chargerCommandes, 30000);
+    return () => clearInterval(intervalRef.current);
   }, [chargerCommandes]);
+
+  const fermer = (e) => {
+    if (e) e.stopPropagation();
+    setActiveId(null);
+  };
+
+  const ouvrirCarte = (id) => {
+    setActiveId(prev => prev === id ? null : id);
+  };
 
   const changerStatut = async (reference, nouveauStatut) => {
     try {
       await axios.patch(`${API}/commandes/${reference}/statut`, { statut: nouveauStatut });
       toast.success('Statut mis à jour !');
-      setCommandeActive(null);
-      chargerCommandes();
+      setActiveId(null);
+      await chargerCommandes();
     } catch (e) {
       toast.error('Erreur lors du changement de statut');
     }
   };
 
-  const toggleProduit = async (produitId, fait) => {
+  const toggleProduit = async (e, produitId, fait) => {
+    e.stopPropagation();
     try {
       await axios.patch(`${API}/produits/${produitId}`, { fait });
-      chargerCommandes();
+      await chargerCommandes();
     } catch (e) {
       toast.error('Erreur mise à jour produit');
     }
@@ -93,6 +93,7 @@ export default function Kanban() {
   };
 
   const statutInfo = (key) => STATUTS.find(s => s.key === key);
+  const commandeActive = commandes.find(c => c.id === activeId) || null;
 
   if (chargement) return <div className="chargement">Chargement des commandes...</div>;
 
@@ -135,12 +136,12 @@ export default function Kanban() {
               {cartes.length === 0 && <div className="vide">Aucune commande</div>}
               {cartes.map(commande => {
                 const pct = progression(commande);
-                const isActive = commandeActive?.id === commande.id;
+                const isActive = activeId === commande.id;
                 return (
                   <div
                     className={`carte ${pct === 100 ? 'carte-done' : ''} ${isActive ? 'carte-active' : ''}`}
                     key={commande.id}
-                    onClick={() => setCommandeActive(isActive ? null : commande)}
+                    onClick={() => ouvrirCarte(commande.id)}
                   >
                     <div className="carte-top">
                       <span className="ref-badge">#{commande.reference}</span>
@@ -160,7 +161,7 @@ export default function Kanban() {
                       </div>
                     </div>
                     {pct === 100 && <div className="all-done-mini">✅ Prêt !</div>}
-                    <div className="carte-hint">{isActive ? 'Cliquer pour fermer ↑' : 'Cliquer pour voir les détails ↓'}</div>
+                    <div className="carte-hint">{isActive ? '▲ Fermer' : '▼ Voir détails'}</div>
                   </div>
                 );
               })}
@@ -169,7 +170,6 @@ export default function Kanban() {
         })}
       </div>
 
-      {/* PANNEAU DETAIL EN DESSOUS */}
       {commandeActive && (
         <div className="detail-panel">
           <div className="panel-header">
@@ -180,9 +180,7 @@ export default function Kanban() {
                 <div className="panel-num">Réf. client : {commandeActive.numero_commande}</div>
               )}
             </div>
-            <button className="panel-close" onClick={() => setCommandeActive(null)}>
-              Fermer ✕
-            </button>
+            <button className="panel-close" onClick={fermer}>Fermer ✕</button>
           </div>
 
           <div className="panel-infos">
@@ -201,7 +199,7 @@ export default function Kanban() {
                 <input
                   type="checkbox"
                   checked={produit.fait}
-                  onChange={e => toggleProduit(produit.id, e.target.checked)}
+                  onChange={e => toggleProduit(e, produit.id, e.target.checked)}
                 />
                 <span className={`produit-nom ${produit.fait ? 'fait' : ''}`}>{produit.nom}</span>
                 <span className={`produit-ean ${produit.fait ? 'fait' : ''}`}>{produit.ean || '—'}</span>
