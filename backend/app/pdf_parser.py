@@ -31,6 +31,14 @@ def extraire_tribeca(texte: str, tableaux: list, words: list) -> dict:
     m = re.search(r'livraison imp.rative\s+(\d{2}/\d{2}/\d{4})', texte_propre)
     if m: resultat["date_livraison"] = m.group(1)
 
+    # Montant total Tribeca
+    m = re.search(r'Montant achat\s+([\d\s]+\.?\d*)\s*MUR', texte_propre)
+    if m:
+        try:
+            resultat["montant_total"] = int(float(m.group(1).replace(' ', '').replace(',', '')))
+        except:
+            pass
+
     if tableaux:
         bloc = tableaux[0][1][1] if len(tableaux[0]) > 1 and len(tableaux[0][1]) > 1 else ""
         for ligne in (bloc or "").split("\n"):

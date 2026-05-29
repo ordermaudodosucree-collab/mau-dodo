@@ -190,8 +190,8 @@ def get_dashboard_stats(db: Session, periode: str = "mois"):
         database.Commande.statut == "livre",
         database.Commande.date_statut >= debut).all()
 
-    ca_total = 0
-    ca_periode = 0
+    ca_total = sum(c.montant_total or 0 for c in toutes)
+    ca_periode = sum(c.montant_total or 0 for c in periode_commandes)
 
     # Top clients
     clients = {}

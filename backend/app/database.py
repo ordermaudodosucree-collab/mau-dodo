@@ -37,6 +37,7 @@ class Commande(Base):
     pdf_chemin        = Column(String, nullable=True)   # chemin relatif sur le serveur
     date_commande     = Column(String, nullable=True)   # date sur le bon (ex: 25/05/2026)
     date_livraison    = Column(String, nullable=True)   # date livraison impérative
+    montant_total     = Column(Integer, nullable=True)
     date_reception    = Column(DateTime, default=func.now())  # date où l'email a été reçu
     date_statut       = Column(DateTime, default=func.now(), onupdate=func.now())
 
