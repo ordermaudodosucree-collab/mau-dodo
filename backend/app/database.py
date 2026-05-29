@@ -1,4 +1,6 @@
 import os
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, func
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./mau_dodo.db")
 
