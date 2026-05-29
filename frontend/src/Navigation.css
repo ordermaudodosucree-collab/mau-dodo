@@ -1,0 +1,35 @@
+cat > ~/Desktop/mau-dodo/frontend/src/Navigation.css << 'EOF'
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #5C3317;
+  padding: 10px 20px;
+  margin-bottom: 1rem;
+  border-radius: 14px;
+}
+.nav-logo { display: flex; align-items: center; gap: 12px; }
+.nav-logo-img { width: 44px; height: 44px; object-fit: contain; background: white; border-radius: 50%; padding: 4px; }
+.nav-logo-text { color: white; }
+.nav-logo-name { font-size: 17px; font-weight: 600; }
+.nav-logo-sub { font-size: 11px; color: rgba(255,255,255,.6); font-style: italic; }
+.nav-links { display: flex; gap: 8px; }
+.nav-btn {
+  background: rgba(255,255,255,.15);
+  border: none;
+  color: white;
+  padding: 8px 18px;
+  border-radius: 99px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background .15s;
+}
+.nav-btn:hover { background: rgba(255,255,255,.25); }
+.nav-btn.active { background: white; color: #5C3317; font-weight: 700; }
+@media (max-width: 600px) {
+  .nav { flex-direction: column; gap: 10px; }
+  .nav-btn { padding: 6px 12px; font-size: 12px; }
+}
+EOF
