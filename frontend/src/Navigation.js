@@ -1,4 +1,3 @@
-cat > ~/Desktop/mau-dodo/frontend/src/Navigation.js << 'EOF'
 import React from 'react';
 import logo from './logo.png';
 import './Navigation.css';
