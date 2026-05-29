@@ -27,7 +27,31 @@ import threading
 
 @app.on_event("startup")
 def startup():
+    # Migration automatique PostgreSQL
+    try:
+        from sqlalchemy import text as sqltext
+        with database.engine.connect() as conn:
+            conn.execute(sqltext(
+                "ALTER TABLE commandes ADD COLUMN IF NOT EXISTS montant_total INTEGER;"
+            ))
+            conn.execute(sqltext(
+                "CREATE TABLE IF NOT EXISTS stocks ("
+                "id SERIAL PRIMARY KEY, ean VARCHAR, nom VARCHAR NOT NULL UNIQUE,"
+                "quantite INTEGER DEFAULT 0, seuil_alerte INTEGER DEFAULT 50,"
+                "date_maj TIMESTAMP DEFAULT NOW());"
+            ))
+            conn.execute(sqltext(
+                "CREATE TABLE IF NOT EXISTS mouvements_stock ("
+                "id SERIAL PRIMARY KEY, stock_id INTEGER REFERENCES stocks(id),"
+                "type VARCHAR NOT NULL, quantite INTEGER NOT NULL,"
+                "motif VARCHAR, date TIMESTAMP DEFAULT NOW());"
+            ))
+            conn.commit()
+    except Exception as e:
+        print(f"Migration: {e}")
+
     init_db()
+
     # Lancer le watcher Gmail en arrière-plan
     if os.getenv("GMAIL_ADDRESS") and os.getenv("GMAIL_APP_PASSWORD"):
         def lancer_watcher():
