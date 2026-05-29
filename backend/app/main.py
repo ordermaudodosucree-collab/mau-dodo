@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from .database import init_db, get_db
 from . import crud, schemas
 from .pdf_parser import extraire_commande
+from sqlalchemy import text as sqltext
+
 
 # ──────────────────────────────────────────
 # INITIALISATION
@@ -286,3 +288,35 @@ def get_dashboard(periode: str = "mois", db: Session = Depends(get_db)):
 # ──────────────────────────────────────────
 # DÉDUCTION STOCK AUTOMATIQUE À LA LIVRAISON
 # ──────────────────────────────────────────
+
+# ──────────────────────────────────────────
+# MIGRATION TEMPORAIRE — à supprimer après
+# ──────────────────────────────────────────
+@app.post("/migration")
+def migration(db: Session = Depends(get_db)):
+    try:
+        db.execute(sqltext(
+            "ALTER TABLE commandes ADD COLUMN IF NOT EXISTS montant_total INTEGER;"
+        ))
+        db.execute(sqltext(
+            "CREATE TABLE IF NOT EXISTS stocks ("
+            "id SERIAL PRIMARY KEY,"
+            "ean VARCHAR,"
+            "nom VARCHAR NOT NULL UNIQUE,"
+            "quantite INTEGER DEFAULT 0,"
+            "seuil_alerte INTEGER DEFAULT 50,"
+            "date_maj TIMESTAMP DEFAULT NOW());"
+        ))
+        db.execute(sqltext(
+            "CREATE TABLE IF NOT EXISTS mouvements_stock ("
+            "id SERIAL PRIMARY KEY,"
+            "stock_id INTEGER REFERENCES stocks(id),"
+            "type VARCHAR NOT NULL,"
+            "quantite INTEGER NOT NULL,"
+            "motif VARCHAR,"
+            "date TIMESTAMP DEFAULT NOW());"
+        ))
+        db.commit()
+        return {"message": "Migration réussie !"}
+    except Exception as e:
+        return {"erreur": str(e)}
