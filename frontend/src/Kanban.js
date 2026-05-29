@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import logo from './logo.png';
 import './Kanban.css';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -99,19 +98,7 @@ export default function Kanban() {
 
   return (
     <div className="kanban">
-      <div className="header">
-        <div className="logo-wrap">
-          <img src={logo} alt="Mau Dodo Sucrée" className="logo-img" />
-          <div className="logo-text">
-            <div className="logo-name">Mau Dodo Sucrée</div>
-            <div className="logo-sub">Suivi des commandes</div>
-          </div>
-        </div>
-        <div className="header-right">
-          <div className="stat-pill"><b>{commandes.length}</b> commandes</div>
-          <div className="stat-pill"><b>{new Date().toLocaleDateString('fr-FR')}</b></div>
-        </div>
-      </div>
+
 
       <div className="searchbar">
         <span>🔍</span>
