@@ -37,6 +37,7 @@ class Commande(Base):
     pdf_chemin        = Column(String, nullable=True)   # chemin relatif sur le serveur
     date_commande     = Column(String, nullable=True)   # date sur le bon (ex: 25/05/2026)
     date_livraison    = Column(String, nullable=True)   # date livraison impérative
+    montant_total     = Column(Integer, nullable=True)  # montant en MUR
     date_reception    = Column(DateTime, default=func.now())  # date où l'email a été reçu
     date_statut       = Column(DateTime, default=func.now(), onupdate=func.now())
 
@@ -57,6 +58,36 @@ class Produit(Base):
     fait         = Column(Integer, default=0)      # 0 = non coché, 1 = coché
 
     commande = relationship("Commande", back_populates="produits")
+
+    # ──────────────────────────────────────────
+    # TABLE : stocks
+    # ──────────────────────────────────────────
+    class Stock(Base):
+        __tablename__ = "stocks"
+
+        id = Column(Integer, primary_key=True, index=True)
+        ean = Column(String, nullable=True, index=True)
+        nom = Column(String, nullable=False, unique=True)
+        quantite = Column(Integer, default=0)
+        seuil_alerte = Column(Integer, default=50)
+        date_maj = Column(DateTime, default=func.now(), onupdate=func.now())
+
+        mouvements = relationship("MouvementStock", back_populates="stock", cascade="all, delete")
+
+    # ──────────────────────────────────────────
+    # TABLE : mouvements_stock
+    # ──────────────────────────────────────────
+    class MouvementStock(Base):
+        __tablename__ = "mouvements_stock"
+
+        id = Column(Integer, primary_key=True, index=True)
+        stock_id = Column(Integer, ForeignKey("stocks.id"), nullable=False)
+        type = Column(String, nullable=False)  # "entree" | "sortie"
+        quantite = Column(Integer, nullable=False)
+        motif = Column(String, nullable=True)  # ex: "CMD-0042" ou "ajout manuel"
+        date = Column(DateTime, default=func.now())
+
+        stock = relationship("Stock", back_populates="mouvements")
 
 
 # ──────────────────────────────────────────

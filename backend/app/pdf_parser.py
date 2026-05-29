@@ -16,7 +16,7 @@ def extraire_tribeca(texte: str, tableaux: list, words: list) -> dict:
     """Format Tribeca/Winners — avec EAN-13."""
     resultat = {
         "numero_commande": None, "client": None, "email_client": None,
-        "telephone_client": None, "date_commande": None, "date_livraison": None,
+        "telephone_client": None, "date_commande": None, "date_livraison": None, "montant_total": None,
         "produits": []
     }
 
@@ -105,7 +105,7 @@ def extraire_purchase_order(texte: str) -> dict:
     """Format Purchase Order (hôtels, restaurants...)"""
     resultat = {
         "numero_commande": None, "client": None, "email_client": None,
-        "telephone_client": None, "date_commande": None, "date_livraison": None,
+        "telephone_client": None, "date_commande": None, "date_livraison": None, "montant_total": None,
         "produits": []
     }
 
@@ -123,6 +123,22 @@ def extraire_purchase_order(texte: str) -> dict:
 
     m = re.search(r'Delivery Date\s*:\s*(\d{2}/\d{2}/\d{4})', texte)
     if m: resultat["date_livraison"] = m.group(1)
+
+    # Montant total Purchase Order
+    m = re.search(r'Net Total.*?([\d,]+\.?\d*)', texte)
+    if m:
+        try:
+            resultat["montant_total"] = int(float(m.group(1).replace(',', '')))
+        except:
+            pass
+
+    # Montant total Tribeca
+    m = re.search(r'Montant achat\s+([\d\s]+\.?\d*)\s*MUR', texte_propre)
+    if m:
+        try:
+            resultat["montant_total"] = int(float(m.group(1).replace(' ', '').replace(',', '')))
+        except:
+            pass
 
     pattern = re.compile(r'^\d+\s+\d+\s+(.+?)\s+(\d+(?:\.\d+)?)\s+EA\s', re.MULTILINE)
     for m in pattern.finditer(texte):

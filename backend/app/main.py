@@ -183,6 +183,10 @@ async def changer_statut(
     if not commande:
         raise HTTPException(status_code=404, detail="Commande introuvable")
 
+    # Déduire le stock automatiquement quand livré
+    if update.statut == "livre":
+        crud.deduire_stock_commande(db, commande.id)
+
     # Notifier tous les clients connectés
     await manager.broadcast({
         "type": "statut_change",
@@ -216,3 +220,69 @@ async def maj_produit(
     })
 
     return produit
+
+# ──────────────────────────────────────────
+# ROUTES — STOCKS
+# ──────────────────────────────────────────
+
+@app.get("/stocks")
+def lister_stocks(db: Session = Depends(get_db)):
+    """Retourne tous les stocks."""
+    return crud.lister_stocks(db)
+
+@app.post("/stocks")
+def creer_stock(stock: schemas.StockCreate, db: Session = Depends(get_db)):
+    """Crée ou met à jour un produit en stock."""
+    return crud.creer_ou_maj_stock(db,
+        nom=stock.nom, ean=stock.ean,
+        quantite=stock.quantite, seuil_alerte=stock.seuil_alerte)
+
+@app.patch("/stocks/{stock_id}")
+def maj_stock(stock_id: int, update: schemas.StockUpdate, db: Session = Depends(get_db)):
+    """Met à jour le seuil d'alerte d'un stock."""
+    stock = db.query(database.Stock).filter(database.Stock.id == stock_id).first()
+    if not stock:
+        raise HTTPException(status_code=404, detail="Stock introuvable")
+    if update.seuil_alerte is not None:
+        stock.seuil_alerte = update.seuil_alerte
+    db.commit()
+    db.refresh(stock)
+    return stock
+
+@app.post("/stocks/{stock_id}/entree")
+async def entree_stock(stock_id: int, mouvement: schemas.MouvementStockBase, db: Session = Depends(get_db)):
+    """Ajoute des unités au stock manuellement."""
+    stock = crud.maj_stock_quantite(db, stock_id, mouvement.quantite, "entree", mouvement.motif)
+    if not stock:
+        raise HTTPException(status_code=404, detail="Stock introuvable")
+    await manager.broadcast({"type": "stock_update", "stock_id": stock_id})
+    return stock
+
+@app.post("/stocks/{stock_id}/sortie")
+async def sortie_stock(stock_id: int, mouvement: schemas.MouvementStockBase, db: Session = Depends(get_db)):
+    """Retire des unités du stock manuellement."""
+    stock = crud.maj_stock_quantite(db, stock_id, mouvement.quantite, "sortie", mouvement.motif)
+    if not stock:
+        raise HTTPException(status_code=404, detail="Stock introuvable")
+    await manager.broadcast({"type": "stock_update", "stock_id": stock_id})
+    return stock
+
+@app.get("/stocks/alertes")
+def stocks_en_alerte(db: Session = Depends(get_db)):
+    """Retourne les stocks sous le seuil d'alerte."""
+    return crud.stocks_en_alerte(db)
+
+
+# ──────────────────────────────────────────
+# ROUTES — DASHBOARD
+# ──────────────────────────────────────────
+
+@app.get("/dashboard")
+def get_dashboard(periode: str = "mois", db: Session = Depends(get_db)):
+    """Retourne les statistiques du dashboard."""
+    return crud.get_dashboard_stats(db, periode)
+
+
+# ──────────────────────────────────────────
+# DÉDUCTION STOCK AUTOMATIQUE À LA LIVRAISON
+# ──────────────────────────────────────────
