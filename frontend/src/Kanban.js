@@ -94,7 +94,15 @@ export default function Kanban() {
   const statutInfo = (key) => STATUTS.find(s => s.key === key);
   const commandeActive = commandes.find(c => c.id === activeId) || null;
 
-  if (chargement) return <div className="chargement">Chargement des commandes...</div>;
+  const dateLivraisonPrevue = (dateReception) => {
+  if (!dateReception) return '—';
+  const date = new Date(dateReception);
+  date.setDate(date.getDate() + 4);
+  return date.toLocaleDateString('fr-FR');
+};
+
+if (chargement) return <div className="chargement">Chargement des commandes...</div>;
+
 
   return (
     <div className="kanban">
@@ -131,11 +139,11 @@ export default function Kanban() {
                     onClick={() => ouvrirCarte(commande.id)}
                   >
                     <div className="carte-top">
-                      <span className="ref-badge">#{commande.reference}</span>
-                      <span className="carte-date">
-                        {commande.date_livraison ? `📅 ${commande.date_livraison}` : new Date(commande.date_reception).toLocaleDateString('fr-FR')}
-                      </span>
-                    </div>
+  <span className="ref-badge">#{commande.reference}</span>
+  <span className="carte-date">
+    📅 {commande.date_livraison || dateLivraisonPrevue(commande.date_reception)}
+  </span>
+</div>
                     <div className="carte-client">{commande.client}</div>
                     {commande.numero_commande && <div className="carte-num">Réf. : {commande.numero_commande}</div>}
                     <div className="prog-wrap">

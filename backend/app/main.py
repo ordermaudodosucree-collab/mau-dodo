@@ -11,6 +11,7 @@ from .database import init_db, get_db
 from . import crud, schemas
 from .pdf_parser import extraire_commande
 from sqlalchemy import text as sqltext
+from .notifier import notif_nouvelle_commande, notif_rupture_stock
 
 
 # ──────────────────────────────────────────
@@ -188,11 +189,13 @@ async def creer_commande(
     db.commit()
     db.refresh(db_commande)
 
-    # Notifier tous les clients connectés
+# Notifier tous les clients connectés
     await manager.broadcast({"type": "nouvelle_commande", "reference": db_commande.reference})
 
-    return db_commande
+    # Envoyer notification email nouvelle commande
+    notif_nouvelle_commande(db_commande)
 
+    return db_commande
 
 @app.patch("/commandes/{reference}/statut", response_model=schemas.Commande)
 async def changer_statut(
@@ -291,6 +294,9 @@ async def sortie_stock(stock_id: int, mouvement: schemas.MouvementStockBase, db:
     if not stock:
         raise HTTPException(status_code=404, detail="Stock introuvable")
     await manager.broadcast({"type": "stock_update", "stock_id": stock_id})
+    # Notification rupture stock
+    if stock.quantite <= stock.seuil_alerte:
+        notif_rupture_stock(stock.nom, stock.quantite, stock.seuil_alerte)
     return stock
 
 @app.get("/stocks/alertes")
