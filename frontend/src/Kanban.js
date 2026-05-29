@@ -13,9 +13,9 @@ const STATUTS = [
 ];
 
 export default function Kanban() {
-  const [commandes, setCommandes]       = useState([]);
-  const [recherche, setRecherche]       = useState('');
-  const [chargement, setChargement]     = useState(true);
+  const [commandes, setCommandes]           = useState([]);
+  const [recherche, setRecherche]           = useState('');
+  const [chargement, setChargement]         = useState(true);
   const [commandeActive, setCommandeActive] = useState(null);
 
   const chargerCommandes = useCallback(async () => {
@@ -98,7 +98,6 @@ export default function Kanban() {
 
   return (
     <div className="kanban">
-      {/* HEADER */}
       <div className="header">
         <div className="logo-wrap">
           <img src={logo} alt="Mau Dodo Sucrée" className="logo-img" />
@@ -113,7 +112,6 @@ export default function Kanban() {
         </div>
       </div>
 
-      {/* RECHERCHE */}
       <div className="searchbar">
         <span>🔍</span>
         <input
@@ -125,7 +123,6 @@ export default function Kanban() {
         {recherche && <button className="clear-btn" onClick={() => setRecherche('')}>✕</button>}
       </div>
 
-      {/* COLONNES HORIZONTALES */}
       <div className="colonnes">
         {STATUTS.map(statut => {
           const cartes = commandesDuStatut(statut.key);
@@ -138,11 +135,12 @@ export default function Kanban() {
               {cartes.length === 0 && <div className="vide">Aucune commande</div>}
               {cartes.map(commande => {
                 const pct = progression(commande);
+                const isActive = commandeActive?.id === commande.id;
                 return (
                   <div
-                    className={`carte ${pct === 100 ? 'carte-done' : ''}`}
+                    className={`carte ${pct === 100 ? 'carte-done' : ''} ${isActive ? 'carte-active' : ''}`}
                     key={commande.id}
-                    onClick={() => setCommandeActive(commande)}
+                    onClick={() => setCommandeActive(isActive ? null : commande)}
                   >
                     <div className="carte-top">
                       <span className="ref-badge">#{commande.reference}</span>
@@ -162,7 +160,7 @@ export default function Kanban() {
                       </div>
                     </div>
                     {pct === 100 && <div className="all-done-mini">✅ Prêt !</div>}
-                    <div className="carte-hint">Cliquer pour voir les détails →</div>
+                    <div className="carte-hint">{isActive ? 'Cliquer pour fermer ↑' : 'Cliquer pour voir les détails ↓'}</div>
                   </div>
                 );
               })}
@@ -171,85 +169,72 @@ export default function Kanban() {
         })}
       </div>
 
-      {/* MODAL — DÉTAIL COMMANDE */}
+      {/* PANNEAU DETAIL EN DESSOUS */}
       {commandeActive && (
-        <div className="modal-overlay" onClick={() => setCommandeActive(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <div className="modal-ref">#{commandeActive.reference}</div>
-                <div className="modal-client">{commandeActive.client}</div>
-                {commandeActive.numero_commande && (
-                  <div className="modal-num">Réf. client : {commandeActive.numero_commande}</div>
-                )}
-              </div>
-<button className="modal-close" onClick={(e) => { e.stopPropagation(); setCommandeActive(null); }}>✕</button>            </div>
-
-            <div className="modal-infos">
-              {commandeActive.date_livraison && (
-                <div className="modal-info-pill">📅 Livraison : {commandeActive.date_livraison}</div>
-              )}
-              {commandeActive.email_client && (
-                <div className="modal-info-pill">✉️ {commandeActive.email_client}</div>
-              )}
-              {commandeActive.telephone_client && (
-                <div className="modal-info-pill">📞 {commandeActive.telephone_client}</div>
-              )}
-              {commandeActive.pdf_nom && (
-                <div className="modal-info-pill">📄 {commandeActive.pdf_nom}</div>
+        <div className="detail-panel">
+          <div className="panel-header">
+            <div>
+              <div className="panel-ref">#{commandeActive.reference}</div>
+              <div className="panel-client">{commandeActive.client}</div>
+              {commandeActive.numero_commande && (
+                <div className="panel-num">Réf. client : {commandeActive.numero_commande}</div>
               )}
             </div>
-
-            {/* PRODUITS */}
-            <div className="modal-produits">
-              <div className="produit-header">
-                <span></span>
-                <span>Produit</span>
-                <span>EAN</span>
-                <span>Qté</span>
-              </div>
-              {commandeActive.produits?.map(produit => (
-                <div className="produit-row" key={produit.id}>
-                  <input
-                    type="checkbox"
-                    checked={produit.fait}
-                    onChange={e => toggleProduit(produit.id, e.target.checked)}
-                  />
-                  <span className={`produit-nom ${produit.fait ? 'fait' : ''}`}>{produit.nom}</span>
-                  <span className={`produit-ean ${produit.fait ? 'fait' : ''}`}>{produit.ean || '—'}</span>
-                  <span className={`produit-qte ${produit.fait ? 'fait' : ''}`}>×{produit.quantite}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* PROGRESSION */}
-            <div className="prog-wrap" style={{marginTop: '1rem'}}>
-              <div className="prog-labels">
-                <span className="prog-txt">Progression</span>
-                <span className="prog-pct">{progression(commandeActive)}%</span>
-              </div>
-              <div className="prog-bar">
-                <div className="prog-fill" style={{
-                  width: `${progression(commandeActive)}%`,
-                  background: statutInfo(commandeActive.statut)?.couleur || '#5C3317'
-                }} />
-              </div>
-            </div>
-
-            {progression(commandeActive) === 100 && (
-              <div className="all-done">✅ Tous les produits prêts !</div>
-            )}
-
-            {/* BOUTON ACTION */}
-            {prochainStatut(commandeActive.statut) && (
-              <button
-                className={`action-btn ${commandeActive.statut === 'recu' ? 'btn-brun' : 'btn-outline'}`}
-                onClick={() => changerStatut(commandeActive.reference, prochainStatut(commandeActive.statut).next)}
-              >
-                {prochainStatut(commandeActive.statut).label}
-              </button>
-            )}
+            <button className="panel-close" onClick={() => setCommandeActive(null)}>
+              Fermer ✕
+            </button>
           </div>
+
+          <div className="panel-infos">
+            {commandeActive.date_livraison && <div className="panel-info-pill">📅 Livraison : {commandeActive.date_livraison}</div>}
+            {commandeActive.email_client && <div className="panel-info-pill">✉️ {commandeActive.email_client}</div>}
+            {commandeActive.telephone_client && <div className="panel-info-pill">📞 {commandeActive.telephone_client}</div>}
+            {commandeActive.pdf_nom && <div className="panel-info-pill">📄 {commandeActive.pdf_nom}</div>}
+          </div>
+
+          <div className="produits">
+            <div className="produit-header">
+              <span></span><span>Produit</span><span>EAN</span><span>Qté</span>
+            </div>
+            {commandeActive.produits?.map(produit => (
+              <div className="produit-row" key={produit.id}>
+                <input
+                  type="checkbox"
+                  checked={produit.fait}
+                  onChange={e => toggleProduit(produit.id, e.target.checked)}
+                />
+                <span className={`produit-nom ${produit.fait ? 'fait' : ''}`}>{produit.nom}</span>
+                <span className={`produit-ean ${produit.fait ? 'fait' : ''}`}>{produit.ean || '—'}</span>
+                <span className={`produit-qte ${produit.fait ? 'fait' : ''}`}>×{produit.quantite}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="prog-wrap">
+            <div className="prog-labels">
+              <span className="prog-txt">Progression</span>
+              <span className="prog-pct">{progression(commandeActive)}%</span>
+            </div>
+            <div className="prog-bar">
+              <div className="prog-fill" style={{
+                width: `${progression(commandeActive)}%`,
+                background: statutInfo(commandeActive.statut)?.couleur || '#5C3317'
+              }} />
+            </div>
+          </div>
+
+          {progression(commandeActive) === 100 && (
+            <div className="all-done">✅ Tous les produits prêts !</div>
+          )}
+
+          {prochainStatut(commandeActive.statut) && (
+            <button
+              className={`action-btn ${commandeActive.statut === 'recu' ? 'btn-brun' : 'btn-outline'}`}
+              onClick={() => changerStatut(commandeActive.reference, prochainStatut(commandeActive.statut).next)}
+            >
+              {prochainStatut(commandeActive.statut).label}
+            </button>
+          )}
         </div>
       )}
     </div>
