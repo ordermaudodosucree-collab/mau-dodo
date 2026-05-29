@@ -1,0 +1,109 @@
+/* ── LAYOUT ── */
+.kanban { padding: 1rem; max-width: 1400px; margin: 0 auto; }
+
+/* ── HEADER ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.logo { font-size: 20px; font-weight: 600; color: #1a1a2e; }
+.logo span { color: #D4537E; }
+.stats { display: flex; gap: 8px; }
+.stat {
+  background: white; border-radius: 8px; padding: 5px 12px;
+  font-size: 13px; color: #666; border: 1px solid #e0e0e0;
+}
+
+/* ── SEARCHBAR ── */
+.searchbar {
+  display: flex; align-items: center; gap: 8px;
+  background: white; border: 1px solid #e0e0e0; border-radius: 10px;
+  padding: 0 12px; margin-bottom: 1rem;
+}
+.searchbar input {
+  border: none; outline: none; font-size: 14px; padding: 10px 0;
+  flex: 1; background: transparent; color: #1a1a2e;
+}
+.clear-btn {
+  background: none; border: none; cursor: pointer;
+  color: #999; font-size: 14px; padding: 4px;
+}
+
+/* ── COLONNES ── */
+.colonnes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.colonne {
+  background: #e8eaed; border-radius: 12px; padding: 10px; min-height: 300px;
+}
+.colonne-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #d0d0d0;
+}
+.colonne-titre { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: .04em; }
+.badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+.badge-blue  { background: #E6F1FB; color: #185FA5; }
+.badge-amber { background: #FAEEDA; color: #854F0B; }
+.badge-green { background: #EAF3DE; color: #3B6D11; }
+.vide { font-size: 12px; color: #999; text-align: center; padding: 20px 0; }
+
+/* ── CARTE ── */
+.carte {
+  background: white; border: 1px solid #e8e8e8; border-radius: 12px;
+  padding: 10px; margin-bottom: 8px; transition: border-color .15s;
+}
+.carte:hover { border-color: #ccc; }
+.carte-done { border-color: #a8d5a2; }
+.carte-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.ref-badge { font-size: 11px; font-weight: 600; color: #72243E; background: #FBEAF0; padding: 2px 8px; border-radius: 99px; }
+.carte-date { font-size: 11px; color: #999; }
+.carte-client { font-size: 13px; font-weight: 600; color: #1a1a2e; margin-bottom: 3px; }
+.carte-num { font-size: 11px; color: #888; margin-bottom: 6px; }
+
+/* ── PIECE JOINTE ── */
+.attach-row {
+  background: #f8f8f8; border-radius: 8px; padding: 5px 8px;
+  margin-bottom: 8px; font-size: 11px; color: #666;
+}
+
+/* ── PRODUITS ── */
+.produits { border-top: 1px solid #f0f0f0; padding-top: 7px; }
+.produit-row { display: flex; align-items: center; gap: 7px; padding: 3px 0; }
+.produit-row input[type=checkbox] {
+  width: 15px; height: 15px; cursor: pointer; accent-color: #D4537E; flex-shrink: 0;
+}
+.produit-nom { flex: 1; font-size: 12px; color: #444; }
+.produit-nom.fait { text-decoration: line-through; color: #bbb; }
+.produit-qte { font-size: 11px; font-weight: 600; color: #333; background: #f0f0f0; padding: 1px 6px; border-radius: 99px; }
+.produit-qte.fait { color: #bbb; }
+
+/* ── PROGRESSION ── */
+.prog-wrap { margin-top: 8px; }
+.prog-labels { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.prog-txt { font-size: 10px; color: #aaa; }
+.prog-pct { font-size: 10px; font-weight: 600; color: #666; }
+.prog-bar { height: 3px; background: #eee; border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+
+/* ── BANDEAU DONE ── */
+.all-done {
+  margin-top: 7px; padding: 5px 8px; background: #EAF3DE;
+  border-radius: 8px; text-align: center; font-size: 11px; color: #3B6D11; font-weight: 600;
+}
+
+/* ── BOUTONS ── */
+.action-btn {
+  margin-top: 8px; width: 100%; font-size: 12px; padding: 6px;
+  border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 500;
+}
+.btn-pink  { background: #D4537E; color: white; border: none; }
+.btn-pink:hover { background: #b8365f; }
+.btn-outline { background: transparent; color: #555; border: 1px solid #ddd; }
+.btn-outline:hover { background: #f5f5f5; }
+
+/* ── CHARGEMENT ── */
+.chargement { text-align: center; padding: 3rem; font-size: 16px; color: #888; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .colonnes { grid-template-columns: 1fr; }
+  .header { flex-direction: column; gap: 8px; align-items: flex-start; }
+}
