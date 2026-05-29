@@ -30,8 +30,16 @@ export default function Navigation({ page, setPage }) {
           onClick={() => setPage('stocks')}
         >
           📦 Stocks
+
+          <button
+          className={`nav-btn ${page === 'historique' ? 'active' : ''}`}
+          onClick={() => setPage('historique')}
+        >
+          📜 Historique
         </button>
-      </div>
+  </button>
+</div>
+    
     </nav>
   );
 }
