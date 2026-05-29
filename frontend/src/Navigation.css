@@ -1,4 +1,3 @@
-cat > ~/Desktop/mau-dodo/frontend/src/Navigation.css << 'EOF'
 .nav {
   display: flex;
   align-items: center;
@@ -32,4 +31,3 @@ cat > ~/Desktop/mau-dodo/frontend/src/Navigation.css << 'EOF'
   .nav { flex-direction: column; gap: 10px; }
   .nav-btn { padding: 6px 12px; font-size: 12px; }
 }
-EOF

@@ -35,4 +35,3 @@ export default function Navigation({ page, setPage }) {
     </nav>
   );
 }
-EOF
