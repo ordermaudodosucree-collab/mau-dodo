@@ -1,11 +1,14 @@
+import logging
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import func as sqlfunc
 from . import database, schemas
+
+log = logging.getLogger(__name__)
 
 
 # ──────────────────────────────────────────
 # GÉNÉRER UNE RÉFÉRENCE UNIQUE
-# ex: CMD-0001, CMD-0042
 # ──────────────────────────────────────────
 def generer_reference(db: Session) -> str:
     total = db.query(database.Commande).count()
@@ -13,11 +16,10 @@ def generer_reference(db: Session) -> str:
 
 
 # ──────────────────────────────────────────
-# CRÉER UNE COMMANDE
+# COMMANDES
 # ──────────────────────────────────────────
 def creer_commande(db: Session, commande: schemas.CommandeCreate, pdf_nom: str = None, pdf_chemin: str = None):
     reference = generer_reference(db)
-
     db_commande = database.Commande(
         reference=reference,
         numero_commande=commande.numero_commande,
@@ -29,10 +31,10 @@ def creer_commande(db: Session, commande: schemas.CommandeCreate, pdf_nom: str =
         pdf_chemin=pdf_chemin,
         date_commande=commande.date_commande,
         date_livraison=commande.date_livraison,
+        montant_total=commande.montant_total,
     )
     db.add(db_commande)
-    db.flush()  # pour obtenir l'id avant le commit
-
+    db.flush()
     for p in commande.produits:
         db_produit = database.Produit(
             commande_id=db_commande.id,
@@ -42,30 +44,19 @@ def creer_commande(db: Session, commande: schemas.CommandeCreate, pdf_nom: str =
             fait=0,
         )
         db.add(db_produit)
-
     db.commit()
     db.refresh(db_commande)
     return db_commande
 
 
-# ──────────────────────────────────────────
-# LISTER TOUTES LES COMMANDES
-# ──────────────────────────────────────────
 def lister_commandes(db: Session):
     return db.query(database.Commande).order_by(database.Commande.date_reception.desc()).all()
 
 
-# ──────────────────────────────────────────
-# RÉCUPÉRER UNE COMMANDE PAR RÉFÉRENCE
-# ──────────────────────────────────────────
 def get_commande(db: Session, reference: str):
     return db.query(database.Commande).filter(database.Commande.reference == reference).first()
 
 
-# ──────────────────────────────────────────
-# CHANGER LE STATUT D'UNE COMMANDE
-# recu → production → livraison → livre
-# ──────────────────────────────────────────
 def changer_statut(db: Session, reference: str, nouveau_statut: str):
     commande = get_commande(db, reference)
     if not commande:
@@ -77,9 +68,6 @@ def changer_statut(db: Session, reference: str, nouveau_statut: str):
     return commande
 
 
-# ──────────────────────────────────────────
-# COCHER / DÉCOCHER UN PRODUIT
-# ──────────────────────────────────────────
 def maj_produit(db: Session, produit_id: int, fait: bool):
     produit = db.query(database.Produit).filter(database.Produit.id == produit_id).first()
     if not produit:
@@ -90,10 +78,6 @@ def maj_produit(db: Session, produit_id: int, fait: bool):
     return produit
 
 
-# ──────────────────────────────────────────
-# RECHERCHER DES COMMANDES
-# par référence, client ou nom de produit
-# ──────────────────────────────────────────
 def rechercher_commandes(db: Session, q: str):
     q = f"%{q}%"
     return (
@@ -108,17 +92,21 @@ def rechercher_commandes(db: Session, q: str):
         .all()
     )
 
+
 # ──────────────────────────────────────────
 # STOCKS
 # ──────────────────────────────────────────
 def lister_stocks(db: Session):
     return db.query(database.Stock).order_by(database.Stock.nom).all()
 
+
 def get_stock_par_nom(db: Session, nom: str):
     return db.query(database.Stock).filter(database.Stock.nom == nom).first()
 
+
 def get_stock_par_ean(db: Session, ean: str):
     return db.query(database.Stock).filter(database.Stock.ean == ean).first()
+
 
 def creer_ou_maj_stock(db: Session, nom: str, ean: str = None, quantite: int = 0, seuil_alerte: int = 50):
     stock = get_stock_par_nom(db, nom)
@@ -128,6 +116,7 @@ def creer_ou_maj_stock(db: Session, nom: str, ean: str = None, quantite: int = 0
         db.commit()
         db.refresh(stock)
     return stock
+
 
 def maj_stock_quantite(db: Session, stock_id: int, quantite: int, type: str, motif: str = None):
     stock = db.query(database.Stock).filter(database.Stock.id == stock_id).first()
@@ -144,12 +133,13 @@ def maj_stock_quantite(db: Session, stock_id: int, quantite: int, type: str, mot
     db.refresh(stock)
     return stock
 
+
 def stocks_en_alerte(db: Session):
     return db.query(database.Stock).filter(
         database.Stock.quantite <= database.Stock.seuil_alerte).all()
 
+
 def deduire_stock_commande(db: Session, commande_id: int):
-    """Déduit automatiquement le stock quand une commande est livrée."""
     commande = db.query(database.Commande).filter(
         database.Commande.id == commande_id).first()
     if not commande:
@@ -166,9 +156,6 @@ def deduire_stock_commande(db: Session, commande_id: int):
 # ──────────────────────────────────────────
 # DASHBOARD
 # ──────────────────────────────────────────
-from datetime import datetime, timedelta
-from sqlalchemy import func as sqlfunc
-
 def get_dashboard_stats(db: Session, periode: str = "mois"):
     now = datetime.now()
     if periode == "semaine":
@@ -192,7 +179,6 @@ def get_dashboard_stats(db: Session, periode: str = "mois"):
     ca_total = sum(c.montant_total or 0 for c in toutes)
     ca_periode = sum(c.montant_total or 0 for c in periode_commandes)
 
-    # Top clients
     clients = {}
     for c in toutes:
         if c.client:
@@ -200,7 +186,6 @@ def get_dashboard_stats(db: Session, periode: str = "mois"):
     top_clients = sorted([{"client": k, "ca": v} for k, v in clients.items()],
         key=lambda x: x["ca"], reverse=True)[:5]
 
-    # CA par jour (30 derniers jours)
     ca_par_jour = {}
     for c in db.query(database.Commande).filter(
             database.Commande.date_reception >= now - timedelta(days=30)).all():
@@ -208,7 +193,6 @@ def get_dashboard_stats(db: Session, periode: str = "mois"):
         ca_par_jour[jour] = ca_par_jour.get(jour, 0) + (c.montant_total or 0)
     ca_par_jour_liste = [{"jour": k, "ca": v} for k, v in sorted(ca_par_jour.items())]
 
-    # Stocks en alerte
     alertes = stocks_en_alerte(db)
 
     return {
@@ -223,11 +207,13 @@ def get_dashboard_stats(db: Session, periode: str = "mois"):
         "stocks_bas": [{"nom": s.nom, "quantite": s.quantite, "seuil": s.seuil_alerte} for s in alertes]
     }
 
+
 # ──────────────────────────────────────────
 # MATIERES PREMIERES
 # ──────────────────────────────────────────
 def lister_matieres_premieres(db: Session):
     return db.query(database.MatierePremiere).order_by(database.MatierePremiere.nom).all()
+
 
 def creer_matiere_premiere(db: Session, nom: str, unite: str, stock: int = 0, seuil_alerte: int = 0):
     mp = database.MatierePremiere(nom=nom, unite=unite, stock=stock, seuil_alerte=seuil_alerte)
@@ -236,9 +222,11 @@ def creer_matiere_premiere(db: Session, nom: str, unite: str, stock: int = 0, se
     db.refresh(mp)
     return mp
 
+
 def maj_stock_matiere_premiere(db: Session, mp_id: int, stock: int, seuil_alerte: int = None):
     mp = db.query(database.MatierePremiere).filter(database.MatierePremiere.id == mp_id).first()
-    if not mp: return None
+    if not mp:
+        return None
     mp.stock = stock
     if seuil_alerte is not None:
         mp.seuil_alerte = seuil_alerte
@@ -253,17 +241,64 @@ def maj_stock_matiere_premiere(db: Session, mp_id: int, stock: int, seuil_alerte
 def lister_recettes(db: Session):
     return db.query(database.Recette).order_by(database.Recette.produit_nom).all()
 
+
 def creer_recette(db: Session, produit_nom: str, grammage: int, ingredients: list):
-    recette = database.Recette(produit_nom=produit_nom, grammage=grammage)
-    db.add(recette)
-    db.flush()
-    for ing in ingredients:
-        ri = database.RecetteIngredient(
-            recette_id=recette.id,
-            matiere_premiere_id=ing["matiere_premiere_id"],
-            quantite=ing["quantite"]
-        )
-        db.add(ri)
-    db.commit()
-    db.refresh(recette)
-    return recette
+    try:
+        recette = database.Recette(produit_nom=produit_nom, grammage=grammage)
+        db.add(recette)
+        db.flush()
+        log.error(f"Recette creee id: {recette.id}")
+        for ing in ingredients:
+            log.error(f"Ajout ingredient: {ing}")
+            ri = database.RecetteIngredient(
+                recette_id=recette.id,
+                matiere_premiere_id=ing["matiere_premiere_id"],
+                quantite=ing["quantite"]
+            )
+            db.add(ri)
+        db.commit()
+        db.refresh(recette)
+        log.error(f"Recette finalisee: {recette.id}")
+        return recette
+    except Exception as e:
+        db.rollback()
+        log.error(f"ERREUR creer_recette: {e}")
+        import traceback
+        log.error(traceback.format_exc())
+        return None
+
+
+def calculer_besoins(db: Session, commande_id: int):
+    commande = db.query(database.Commande).filter(database.Commande.id == commande_id).first()
+    if not commande:
+        return []
+
+    besoins = {}
+
+    for produit in commande.produits:
+        recette = db.query(database.Recette).filter(
+            database.Recette.produit_nom.ilike(f"%{produit.nom}%")
+        ).first()
+
+        if not recette:
+            continue
+
+        for ingredient in recette.ingredients:
+            mp_id = ingredient.matiere_premiere_id
+            if mp_id not in besoins:
+                besoins[mp_id] = 0
+            besoins[mp_id] += ingredient.quantite * produit.quantite
+
+    resultat = []
+    for mp_id, quantite_necessaire in besoins.items():
+        mp = db.query(database.MatierePremiere).filter(database.MatierePremiere.id == mp_id).first()
+        if mp:
+            resultat.append({
+                "matiere_premiere": mp.nom,
+                "unite": mp.unite,
+                "quantite_necessaire": quantite_necessaire,
+                "stock_disponible": mp.stock,
+                "manque": mp.stock < quantite_necessaire
+            })
+
+    return resultat
