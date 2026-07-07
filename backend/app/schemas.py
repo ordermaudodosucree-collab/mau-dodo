@@ -111,3 +111,65 @@ class DashboardStats(BaseModel):
     top_clients: list
     ca_par_jour: list
     stocks_bas: list
+
+# ──────────────────────────────────────────
+# MATIERES PREMIERES
+# ──────────────────────────────────────────
+class MatierePremiere(BaseModel):
+    id: int
+    nom: str
+    unite: str
+    stock: int
+    seuil_alerte: int
+    class Config:
+        from_attributes = True
+
+class MatierePremiereCreate(BaseModel):
+    nom: str
+    unite: str
+    stock: int = 0
+    seuil_alerte: int = 0
+
+class MatierePremiereUpdate(BaseModel):
+    stock: Optional[int] = None
+    seuil_alerte: Optional[int] = None
+
+
+# ──────────────────────────────────────────
+# RECETTES
+# ──────────────────────────────────────────
+class RecetteIngredientCreate(BaseModel):
+    matiere_premiere_id: int
+    quantite: int
+
+class RecetteIngredient(BaseModel):
+    id: int
+    matiere_premiere_id: int
+    quantite: int
+    matiere_premiere: MatierePremiere
+    class Config:
+        from_attributes = True
+
+class RecetteCreate(BaseModel):
+    produit_nom: str
+    grammage: int
+    ingredients: list[RecetteIngredientCreate] = []
+
+class Recette(BaseModel):
+    id: int
+    produit_nom: str
+    grammage: int
+    ingredients: list[RecetteIngredient] = []
+    class Config:
+        from_attributes = True
+
+
+# ──────────────────────────────────────────
+# CALCUL MATIERES PREMIERES PAR COMMANDE
+# ──────────────────────────────────────────
+class BesoinMatierePremiere(BaseModel):
+    matiere_premiere: str
+    unite: str
+    quantite_necessaire: int
+    stock_disponible: int
+    manque: bool

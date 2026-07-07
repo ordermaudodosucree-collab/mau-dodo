@@ -350,3 +350,52 @@ def migration(db: Session = Depends(get_db)):
         return {"message": "Migration réussie !"}
     except Exception as e:
         return {"erreur": str(e)}
+
+# ──────────────────────────────────────────
+# ROUTES — MATIERES PREMIERES
+# ──────────────────────────────────────────
+
+@app.get("/matieres-premieres")
+def lister_matieres_premieres(db: Session = Depends(get_db)):
+    return crud.lister_matieres_premieres(db)
+
+@app.post("/matieres-premieres")
+def creer_matiere_premiere(mp: schemas.MatierePremiereCreate, db: Session = Depends(get_db)):
+    return crud.creer_matiere_premiere(db, mp.nom, mp.unite, mp.stock, mp.seuil_alerte)
+
+@app.patch("/matieres-premieres/{mp_id}")
+def maj_matiere_premiere(mp_id: int, update: schemas.MatierePremiereUpdate, db: Session = Depends(get_db)):
+    mp = crud.maj_stock_matiere_premiere(db, mp_id, update.stock, update.seuil_alerte)
+    if not mp:
+        raise HTTPException(status_code=404, detail="Matiere premiere introuvable")
+    return mp
+
+
+# ──────────────────────────────────────────
+# ROUTES — RECETTES
+# ──────────────────────────────────────────
+
+@app.get("/recettes")
+def lister_recettes(db: Session = Depends(get_db)):
+    return crud.lister_recettes(db)
+
+@app.post("/recettes")
+def creer_recette(recette: schemas.RecetteCreate, db: Session = Depends(get_db)):
+    return crud.creer_recette(
+        db,
+        recette.produit_nom,
+        recette.grammage,
+        [{"matiere_premiere_id": i.matiere_premiere_id, "quantite": i.quantite}
+         for i in recette.ingredients]
+    )
+
+
+# ──────────────────────────────────────────
+# ROUTES — CALCUL BESOINS PAR COMMANDE
+# ──────────────────────────────────────────
+
+@app.get("/commandes/{commande_id}/besoins")
+def calculer_besoins(commande_id: int, db: Session = Depends(get_db)):
+    """Calcule les matieres premieres necessaires pour une commande."""
+    besoins = crud.calculer_besoins(db, commande_id)
+    return besoins

@@ -89,6 +89,49 @@ class MouvementStock(Base):
 
     stock = relationship("Stock", back_populates="mouvements")
 
+# ──────────────────────────────────────────
+# TABLE : matieres_premieres
+# ──────────────────────────────────────────
+class MatierePremiere(Base):
+    __tablename__ = "matieres_premieres"
+
+    id           = Column(Integer, primary_key=True, index=True)
+    nom          = Column(String, nullable=False, unique=True)
+    unite        = Column(String, nullable=False)  # "g" | "ml" | "kg" | "l"
+    stock        = Column(Integer, default=0)
+    seuil_alerte = Column(Integer, default=0)
+    date_maj     = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    recettes = relationship("RecetteIngredient", back_populates="matiere_premiere")
+
+
+# ──────────────────────────────────────────
+# TABLE : recettes
+# ──────────────────────────────────────────
+class Recette(Base):
+    __tablename__ = "recettes"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    produit_nom = Column(String, nullable=False, unique=True)
+    grammage    = Column(Integer, nullable=False)  # 100 | 200
+    date_maj    = Column(DateTime, default=func.now())
+
+    ingredients = relationship("RecetteIngredient", back_populates="recette", cascade="all, delete")
+
+
+# ──────────────────────────────────────────
+# TABLE : recette_ingredients
+# ──────────────────────────────────────────
+class RecetteIngredient(Base):
+    __tablename__ = "recette_ingredients"
+
+    id                  = Column(Integer, primary_key=True, index=True)
+    recette_id          = Column(Integer, ForeignKey("recettes.id"), nullable=False)
+    matiere_premiere_id = Column(Integer, ForeignKey("matieres_premieres.id"), nullable=False)
+    quantite            = Column(Integer, nullable=False)  # quantite pour 1 unite
+
+    recette          = relationship("Recette", back_populates="ingredients")
+    matiere_premiere = relationship("MatierePremiere", back_populates="recettes")
 
 # ──────────────────────────────────────────
 # Création des tables au démarrage

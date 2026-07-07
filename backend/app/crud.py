@@ -222,3 +222,36 @@ def get_dashboard_stats(db: Session, periode: str = "mois"):
         "ca_par_jour": ca_par_jour_liste,
         "stocks_bas": [{"nom": s.nom, "quantite": s.quantite, "seuil": s.seuil_alerte} for s in alertes]
     }
+
+# ──────────────────────────────────────────
+# MATIERES PREMIERES
+# ──────────────────────────────────────────
+def lister_matieres_premieres(db: Session):
+    return db.query(database.MatierePremiere).order_by(database.MatierePremiere.nom).all()
+
+def creer_matiere_premiere(db: Session, nom: str, unite: str, stock: int = 0, seuil_alerte: int = 0):
+    mp = database.MatierePremiere(nom=nom, unite=unite, stock=stock, seuil_alerte=seuil_alerte)
+    db.add(mp)
+    db.commit()
+    db.refresh(mp)
+    return mp
+
+def maj_stock_matiere_premiere(db: Session, mp_id: int, stock: int, seuil_alerte: int = None):
+    mp = db.query(database.MatierePremiere).filter(database.MatierePremiere.id == mp_id).first()
+    if not mp: return None
+    mp.stock = stock
+    if seuil_alerte is not None:
+        mp.seuil_alerte = seuil_alerte
+    db.commit()
+    db.refresh(mp)
+    return mp
+
+
+# ──────────────────────────────────────────
+# RECETTES
+# ──────────────────────────────────────────
+def lister_recettes(db: Session):
+    return db.query(database.Recette).order_by(database.Recette.produit_nom).all()
+
+def creer_recette(db: Session, produit_nom: str, grammage: int, ingredients: list):
+    recette = database.Recette(produit_nom=produit_nom, grammage=grammage)
