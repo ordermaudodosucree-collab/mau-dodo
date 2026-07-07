@@ -47,6 +47,9 @@ export default function Kanban() {
   } catch (e) {
     setBesoins([]);
   }
+console.log('Erreur besoins:', e);
+    setBesoins([]);
+  }
 };
 
   const ouvrirCarte = (id) => {
