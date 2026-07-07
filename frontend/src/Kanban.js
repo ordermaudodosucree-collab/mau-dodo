@@ -17,7 +17,6 @@ export default function Kanban() {
   const [chargement, setChargement]         = useState(true);
   const [activeId, setActiveId]             = useState(null);
   const intervalRef                         = useRef(null);
-  const [besoins, setBesoins] = useState([]);
 
   const chargerCommandes = useCallback(async () => {
     try {
@@ -44,7 +43,6 @@ export default function Kanban() {
 const chargerBesoins = async (commandeId) => {
   try {
     const res = await axios.get(`${API}/commandes/${commandeId}/besoins`);
-    setBesoins(res.data);
   } catch (e) {
     setBesoins([]);
   }
