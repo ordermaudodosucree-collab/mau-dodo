@@ -49,7 +49,7 @@ def startup():
             ))
             conn.commit()
     except Exception as e:
-        print(f"Migration: {e}")
+        print(f'Migration info: {e}')
 
     init_db()
 

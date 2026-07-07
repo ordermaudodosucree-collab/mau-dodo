@@ -10,7 +10,7 @@ from email.header import decode_header
 # ── Configuration ──────────────────────────────────────────────
 GMAIL_ADDRESS      = os.getenv("GMAIL_ADDRESS")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
-API_URL            = os.getenv("API_URL", "http://localhost:8000")
+API_URL            = os.getenv("API_URL", "http://localhost:10000")
 CHECK_INTERVAL     = 120  # vérifier toutes les 2 minutes
 
 logging.basicConfig(
