@@ -47,6 +47,27 @@ def startup():
                 "type VARCHAR NOT NULL, quantite INTEGER NOT NULL,"
                 "motif VARCHAR, date TIMESTAMP DEFAULT NOW());"
             ))
+
+            conn.execute(sqltext(
+                "CREATE TABLE IF NOT EXISTS matieres_premieres ("
+                "id SERIAL PRIMARY KEY, nom VARCHAR NOT NULL UNIQUE,"
+                "unite VARCHAR NOT NULL, stock INTEGER DEFAULT 0,"
+                "seuil_alerte INTEGER DEFAULT 0,"
+                "date_maj TIMESTAMP DEFAULT NOW());"
+            ))
+            conn.execute(sqltext(
+                "CREATE TABLE IF NOT EXISTS recettes ("
+                "id SERIAL PRIMARY KEY, produit_nom VARCHAR NOT NULL UNIQUE,"
+                "grammage INTEGER NOT NULL, date_maj TIMESTAMP DEFAULT NOW());"
+            ))
+            conn.execute(sqltext(
+                "CREATE TABLE IF NOT EXISTS recette_ingredients ("
+                "id SERIAL PRIMARY KEY,"
+                "recette_id INTEGER REFERENCES recettes(id),"
+                "matiere_premiere_id INTEGER REFERENCES matieres_premieres(id),"
+                "quantite INTEGER NOT NULL);"
+            ))
+
             conn.commit()
     except Exception as e:
         print(f'Migration info: {e}')
