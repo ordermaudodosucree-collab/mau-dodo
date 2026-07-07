@@ -255,3 +255,15 @@ def lister_recettes(db: Session):
 
 def creer_recette(db: Session, produit_nom: str, grammage: int, ingredients: list):
     recette = database.Recette(produit_nom=produit_nom, grammage=grammage)
+    db.add(recette)
+    db.flush()
+    for ing in ingredients:
+        ri = database.RecetteIngredient(
+            recette_id=recette.id,
+            matiere_premiere_id=ing["matiere_premiere_id"],
+            quantite=ing["quantite"]
+        )
+        db.add(ri)
+    db.commit()
+    db.refresh(recette)
+    return recette
