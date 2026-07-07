@@ -469,3 +469,14 @@ def debug_tables(db: Session = Depends(get_db)):
         return {"tables": tables}
     except Exception as e:
         return {"error": str(e)}
+
+@app.delete("/recettes/{recette_id}")
+def supprimer_recette(recette_id: int, db: Session = Depends(get_db)):
+    try:
+        from sqlalchemy import text as sqltext
+        db.execute(sqltext(f"DELETE FROM recette_ingredients WHERE recette_id = {recette_id}"))
+        db.execute(sqltext(f"DELETE FROM recettes WHERE id = {recette_id}"))
+        db.commit()
+        return {"message": "Recette supprimée"}
+    except Exception as e:
+        return {"error": str(e)}
