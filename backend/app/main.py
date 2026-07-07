@@ -7,7 +7,7 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from .database import init_db, get_db
+from .database import init_db, get_db, MatierePremiere, Recette, RecetteIngredient
 from . import crud, schemas
 from .pdf_parser import extraire_commande
 from sqlalchemy import text as sqltext
