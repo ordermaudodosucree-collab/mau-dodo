@@ -455,11 +455,10 @@ def calculer_besoins(commande_id: int, db: Session = Depends(get_db)):
 def debug_tables(db: Session = Depends(get_db)):
     try:
         from sqlalchemy import text as sqltext
-        with database.engine.connect() as conn:
-            result = conn.execute(sqltext(
-                "SELECT table_name FROM information_schema.tables WHERE table_schema='public';"
-            ))
-            tables = [row[0] for row in result]
+        result = db.execute(sqltext(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema='public';"
+        ))
+        tables = [row[0] for row in result]
         return {"tables": tables}
     except Exception as e:
         return {"error": str(e)}
