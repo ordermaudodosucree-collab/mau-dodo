@@ -50,35 +50,10 @@
   background: #FBF6F2;
   overflow-x: auto;
 }
-.recette-table { width: 100%; border-collapse: collapse; }
-.recette-table th { 
-  background: #5C3317; 
-  color: white; 
-  padding: 8px 14px; 
-  text-align: left; 
-  font-size: 11px; 
-  text-transform: uppercase; 
-  letter-spacing: .04em;
-  width: 50%;
-}
-.recette-table td { 
-  padding: 9px 14px; 
-  font-size: 13px; 
-  border-bottom: 1px solid #F5EDE6; 
-  color: #2C1A0E;
-  width: 50%;
-}
+.recette-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; border: 1px solid #E8D5C4; table-layout: fixed; }
+.recette-table th { background: #5C3317; color: white; padding: 8px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.recette-table th:first-child { width: 65%; }
+.recette-table th:last-child { width: 35%; }
+.recette-table td { padding: 9px 14px; font-size: 13px; border-bottom: 1px solid #F5EDE6; color: #2C1A0E; text-align: left; }
+.recette-table td:last-child { font-weight: 700; color: #5C3317; }
 .recette-table tr:last-child td { border-bottom: none; }
-
-.empty { text-align: center; padding: 3rem; font-size: 14px; color: #A0785A; font-style: italic; background: white; border-radius: 14px; border: 1px solid #E8D5C4; }
-.chargement { text-align: center; padding: 3rem; font-size: 15px; color: #A0785A; }
-
-@media (max-width: 768px) {
-  .form-grid { grid-template-columns: 1fr; }
-  .ingredient-row { grid-template-columns: 1fr 80px 36px; }
-}
-
-.recette-table th:first-child { width: 60%; }
-.recette-table th:last-child { width: 40%; text-align: right; }
-.recette-table td:first-child { width: 60%; }
-.recette-table td:last-child { width: 40%; text-align: right; }
