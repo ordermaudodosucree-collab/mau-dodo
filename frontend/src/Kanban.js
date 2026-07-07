@@ -40,6 +40,15 @@ export default function Kanban() {
     setActiveId(null);
   };
 
+  const chargerBesoins = async (commandeId) => {
+  try {
+    const res = await axios.get(`${API}/commandes/${commandeId}/besoins`);
+    setBesoins(res.data);
+  } catch (e) {
+    setBesoins([]);
+  }
+};
+
   const ouvrirCarte = (id) => {
   setActiveId(prev => prev === id ? null : id);
   if (activeId !== id) {
@@ -108,14 +117,6 @@ export default function Kanban() {
 
 const [besoins, setBesoins] = useState([]);
 
-const chargerBesoins = async (commandeId) => {
-  try {
-    const res = await axios.get(`${API}/commandes/${commandeId}/besoins`);
-    setBesoins(res.data);
-  } catch (e) {
-    setBesoins([]);
-  }
-};
 
 if (chargement) return <div className="chargement">Chargement des commandes...</div>;
 
