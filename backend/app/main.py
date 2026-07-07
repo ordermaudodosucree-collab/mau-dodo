@@ -398,7 +398,29 @@ def maj_matiere_premiere(mp_id: int, update: schemas.MatierePremiereUpdate, db: 
 
 @app.get("/recettes")
 def lister_recettes(db: Session = Depends(get_db)):
-    return crud.lister_recettes(db)
+    recettes = crud.lister_recettes(db)
+    result = []
+    for r in recettes:
+        ingredients = []
+        for ing in r.ingredients:
+            mp = db.query(database.MatierePremiere).filter(
+                database.MatierePremiere.id == ing.matiere_premiere_id).first()
+            ingredients.append({
+                "id": ing.id,
+                "quantite": ing.quantite,
+                "matiere_premiere": {
+                    "id": mp.id,
+                    "nom": mp.nom,
+                    "unite": mp.unite
+                } if mp else None
+            })
+        result.append({
+            "id": r.id,
+            "produit_nom": r.produit_nom,
+            "grammage": r.grammage,
+            "ingredients": ingredients
+        })
+    return result
 
 @app.post("/recettes")
 def creer_recette(recette: schemas.RecetteCreate, db: Session = Depends(get_db)):
