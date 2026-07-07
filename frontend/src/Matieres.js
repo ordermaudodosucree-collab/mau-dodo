@@ -1,26 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-
+import './Matieres.css';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-export default function MatieresPremières() {
-  const [matieres, setMatieres]         = useState([]);
-  const [recettes, setRecettes]         = useState([]);
-  const [chargement, setChargement]     = useState(true);
-  const [onglet, setOnglet]             = useState('matieres'); // 'matieres' | 'recettes'
-  const [showAjouter, setShowAjouter]   = useState(false);
-  const [showRecette, setShowRecette]   = useState(false);
+export default function Matieres() {
+  const [matieres, setMatieres]               = useState([]);
+  const [recettes, setRecettes]               = useState([]);
+  const [chargement, setChargement]           = useState(true);
+  const [onglet, setOnglet]                   = useState('matieres');
+  const [showAjouter, setShowAjouter]         = useState(false);
+  const [showRecette, setShowRecette]         = useState(false);
+  const [recetteOuverte, setRecetteOuverte]   = useState(null);
 
-  // Formulaire matière première
-  const [formNom, setFormNom]           = useState('');
-  const [formUnite, setFormUnite]       = useState('g');
-  const [formStock, setFormStock]       = useState(0);
-  const [formSeuil, setFormSeuil]       = useState(0);
+  const [formNom, setFormNom]                 = useState('');
+  const [formUnite, setFormUnite]             = useState('g');
+  const [formStock, setFormStock]             = useState(0);
+  const [formSeuil, setFormSeuil]             = useState(0);
 
-  // Formulaire recette
-  const [recetteNom, setRecetteNom]     = useState('');
+  const [recetteNom, setRecetteNom]           = useState('');
   const [recetteGrammage, setRecetteGrammage] = useState(200);
   const [recetteIngredients, setRecetteIngredients] = useState([]);
 
@@ -67,6 +66,17 @@ export default function MatieresPremières() {
     }
   };
 
+  const supprimerRecette = async (id) => {
+    try {
+      await axios.delete(`${API}/recettes/${id}`);
+      toast.success('Recette supprimée !');
+      setRecetteOuverte(null);
+      charger();
+    } catch (e) {
+      toast.error('Erreur suppression recette');
+    }
+  };
+
   const ajouterIngredient = () => {
     setRecetteIngredients([...recetteIngredients, { matiere_premiere_id: '', quantite: 0 }]);
   };
@@ -102,6 +112,10 @@ export default function MatieresPremières() {
     }
   };
 
+  const toggleRecette = (id) => {
+    setRecetteOuverte(recetteOuverte === id ? null : id);
+  };
+
   if (chargement) return <div className="chargement">Chargement...</div>;
 
   return (
@@ -122,7 +136,6 @@ export default function MatieresPremières() {
         </div>
       </div>
 
-      {/* ONGLETS */}
       <div className="mp-onglets">
         <button className={`onglet-btn ${onglet === 'matieres' ? 'active' : ''}`}
           onClick={() => setOnglet('matieres')}>
@@ -187,7 +200,6 @@ export default function MatieresPremières() {
               </select>
             </div>
           </div>
-
           <h4 className="ingredients-titre">Ingrédients pour 1 unité</h4>
           {recetteIngredients.map((ing, index) => (
             <div className="ingredient-row" key={index}>
@@ -207,7 +219,6 @@ export default function MatieresPremières() {
           <button className="btn-add-ingredient" onClick={ajouterIngredient}>
             + Ajouter un ingrédient
           </button>
-
           <div className="form-actions" style={{marginTop: '1rem'}}>
             <button className="btn-save" onClick={creerRecette}>Créer la recette</button>
             <button className="btn-cancel" onClick={() => setShowRecette(false)}>Annuler</button>
@@ -215,7 +226,7 @@ export default function MatieresPremières() {
         </div>
       )}
 
-      {/* LISTE MATIERES PREMIERES */}
+      {/* LISTE MATIERES */}
       {onglet === 'matieres' && (
         <div className="mp-table-wrap">
           {matieres.length === 0 ? (
@@ -247,8 +258,7 @@ export default function MatieresPremières() {
                       <td>
                         {enAlerte
                           ? <span className="statut-badge rouge">⚠️ Alerte</span>
-                          : <span className="statut-badge vert">✅ OK</span>
-                        }
+                          : <span className="statut-badge vert">✅ OK</span>}
                       </td>
                     </tr>
                   );
@@ -259,38 +269,56 @@ export default function MatieresPremières() {
         </div>
       )}
 
-      {/* LISTE RECETTES */}
+      {/* LISTE RECETTES — CARTES QUI S'OUVRENT */}
       {onglet === 'recettes' && (
         <div className="recettes-list">
           {recettes.length === 0 ? (
             <div className="empty">Aucune recette — cliquez sur "+ Créer une recette"</div>
           ) : (
-            recettes.map(recette => (
-              <div className="recette-card" key={recette.id}>
-                <div className="recette-header">
-                  <div>
-                    <div className="recette-nom">{recette.produit_nom}</div>
-                    <div className="recette-grammage">Recette pour 1 unité de {recette.grammage}g</div>
-                  </div>
+            recettes.map(recette => {
+              const isOpen = recetteOuverte === recette.id;
+              return (
+                <div className={`recette-card ${isOpen ? 'open' : ''}`} key={recette.id}>
+                  <button className="recette-header-btn" onClick={() => toggleRecette(recette.id)}>
+                    <div className="recette-header-left">
+                      <div className="recette-nom">{recette.produit_nom}</div>
+                      <div className="recette-grammage">Recette pour 1 unité de {recette.grammage}g</div>
+                    </div>
+                    <div className="recette-header-right">
+                      <span className="recette-nb-ing">
+                        {recette.ingredients?.length || 0} ingrédient{recette.ingredients?.length > 1 ? 's' : ''}
+                      </span>
+                      <span className={`recette-arrow ${isOpen ? 'open' : ''}`}>▼</span>
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="recette-body">
+                      <table className="recette-table">
+                        <thead>
+                          <tr>
+                            <th>Matière première</th>
+                            <th>Quantité par unité</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {recette.ingredients?.map(ing => (
+                            <tr key={ing.id}>
+                              <td>{ing.matiere_premiere?.nom || '—'}</td>
+                              <td className="td-qte">{ing.quantite} {ing.matiere_premiere?.unite}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <button className="btn-supprimer-recette"
+                        onClick={() => supprimerRecette(recette.id)}>
+                        🗑 Supprimer cette recette
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <table className="recette-table">
-                  <thead>
-                    <tr>
-                      <th>Matière première</th>
-                      <th>Quantité par unité</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recette.ingredients?.map(ing => (
-                      <tr key={ing.id}>
-                        <td>{ing.matiere_premiere?.nom || '—'}</td>
-                        <td>{ing.quantite} {ing.matiere_premiere?.unite}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
