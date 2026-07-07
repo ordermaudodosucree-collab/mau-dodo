@@ -399,34 +399,41 @@ def maj_matiere_premiere(mp_id: int, update: schemas.MatierePremiereUpdate, db: 
 @app.get("/recettes")
 def lister_recettes(db: Session = Depends(get_db)):
     try:
-        recettes = crud.lister_recettes(db)
+        from sqlalchemy import text as sqltext
+
+        # Récupérer les recettes
+        recettes_raw = db.execute(
+            sqltext("SELECT id, produit_nom, grammage FROM recettes ORDER BY produit_nom")).fetchall()
+
         result = []
-        for r in recettes:
-            ingredients = []
-            for ing in r.ingredients:
-                mp = db.query(database.MatierePremiere).filter(
-                    database.MatierePremiere.id == ing.matiere_premiere_id).first()
-                ingredients.append({
-                    "id": ing.id,
-                    "quantite": ing.quantite,
-                    "matiere_premiere": {
-                        "id": mp.id,
-                        "nom": mp.nom,
-                        "unite": mp.unite
-                    } if mp else None
-                })
+        for r in recettes_raw:
+            # Récupérer les ingrédients de chaque recette
+            ings_raw = db.execute(sqltext(
+                f"SELECT ri.id, ri.quantite, mp.id as mp_id, mp.nom, mp.unite "
+                f"FROM recette_ingredients ri "
+                f"JOIN matieres_premieres mp ON mp.id = ri.matiere_premiere_id "
+                f"WHERE ri.recette_id = {r[0]}"
+            )).fetchall()
+
+            ingredients = [
+                {"id": i[0], "quantite": i[1], "matiere_premiere": {"id": i[2], "nom": i[3], "unite": i[4]}}
+                for i in ings_raw
+            ]
+
             result.append({
-                "id": r.id,
-                "produit_nom": r.produit_nom,
-                "grammage": r.grammage,
+                "id": r[0],
+                "produit_nom": r[1],
+                "grammage": r[2],
                 "ingredients": ingredients
             })
+
         return result
     except Exception as e:
-        print(f"Erreur recettes: {e}")
+        log.error(f"Erreur GET recettes: {e}")
         import traceback
-        traceback.print_exc()
+        log.error(traceback.format_exc())
         return []
+
 
 
 @app.post("/recettes")
