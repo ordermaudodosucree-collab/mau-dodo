@@ -449,3 +449,17 @@ def calculer_besoins(commande_id: int, db: Session = Depends(get_db)):
     """Calcule les matieres premieres necessaires pour une commande."""
     besoins = crud.calculer_besoins(db, commande_id)
     return besoins
+
+
+@app.get("/debug/tables")
+def debug_tables(db: Session = Depends(get_db)):
+    try:
+        from sqlalchemy import text as sqltext
+        with database.engine.connect() as conn:
+            result = conn.execute(sqltext(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema='public';"
+            ))
+            tables = [row[0] for row in result]
+        return {"tables": tables}
+    except Exception as e:
+        return {"error": str(e)}
