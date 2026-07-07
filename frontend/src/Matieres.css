@@ -44,6 +44,12 @@
 .recette-header { margin-bottom: 12px; }
 .recette-nom { font-size: 15px; font-weight: 700; color: #5C3317; }
 .recette-grammage { font-size: 12px; color: #A0785A; margin-top: 3px; }
+.recette-body { 
+  border-top: 1px solid #F0E8E0; 
+  padding: 16px 20px; 
+  background: #FBF6F2;
+  overflow-x: auto;
+}
 .recette-table { width: 100%; border-collapse: collapse; }
 .recette-table th { 
   background: #5C3317; 
