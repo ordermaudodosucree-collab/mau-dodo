@@ -77,3 +77,8 @@
   .form-grid { grid-template-columns: 1fr; }
   .ingredient-row { grid-template-columns: 1fr 80px 36px; }
 }
+
+.recette-table th:first-child { width: 60%; }
+.recette-table th:last-child { width: 40%; text-align: right; }
+.recette-table td:first-child { width: 60%; }
+.recette-table td:last-child { width: 40%; text-align: right; }
