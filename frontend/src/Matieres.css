@@ -1,4 +1,4 @@
-.mp-page { padding: 0 0 2rem; }
+.mp-page { padding: 1rem 1rem 2rem; }
 .mp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; }
 .mp-title { font-size: 22px; font-weight: 700; color: #5C3317; }
 .btn-ajouter { background: #5C3317; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; }
