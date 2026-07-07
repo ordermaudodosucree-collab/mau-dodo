@@ -267,13 +267,12 @@ def creer_recette(db: Session, produit_nom: str, grammage: int, ingredients: lis
         log.error(traceback.format_exc())
         return None
 
-
 def calculer_besoins(db: Session, commande_id: int):
     commande = db.query(database.Commande).filter(database.Commande.id == commande_id).first()
     if not commande:
         return []
 
-    besoins = {}
+    resultat = []
 
     for produit in commande.produits:
         recette = db.query(database.Recette).filter(
@@ -283,22 +282,25 @@ def calculer_besoins(db: Session, commande_id: int):
         if not recette:
             continue
 
+        besoins_produit = []
         for ingredient in recette.ingredients:
-            mp_id = ingredient.matiere_premiere_id
-            if mp_id not in besoins:
-                besoins[mp_id] = 0
-            besoins[mp_id] += ingredient.quantite * produit.quantite
+            mp = db.query(database.MatierePremiere).filter(
+                database.MatierePremiere.id == ingredient.matiere_premiere_id).first()
+            if mp:
+                quantite_totale = ingredient.quantite * produit.quantite
+                besoins_produit.append({
+                    "matiere_premiere": mp.nom,
+                    "unite": mp.unite,
+                    "quantite_necessaire": quantite_totale,
+                    "stock_disponible": mp.stock,
+                    "manque": mp.stock < quantite_totale
+                })
 
-    resultat = []
-    for mp_id, quantite_necessaire in besoins.items():
-        mp = db.query(database.MatierePremiere).filter(database.MatierePremiere.id == mp_id).first()
-        if mp:
+        if besoins_produit:
             resultat.append({
-                "matiere_premiere": mp.nom,
-                "unite": mp.unite,
-                "quantite_necessaire": quantite_necessaire,
-                "stock_disponible": mp.stock,
-                "manque": mp.stock < quantite_necessaire
+                "produit": produit.nom,
+                "quantite_commandee": produit.quantite,
+                "besoins": besoins_produit
             })
 
     return resultat
