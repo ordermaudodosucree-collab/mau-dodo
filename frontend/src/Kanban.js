@@ -238,32 +238,39 @@ if (chargement) return <div className="chargement">Chargement des commandes...</
           {/* BESOINS MATIERES PREMIERES */}
 {besoins.length > 0 && (
   <div style={{marginTop: '1rem', borderTop: '1px solid #F0E8E0', paddingTop: '1rem'}}>
-    <div style={{fontSize: '13px', fontWeight: '700', color: '#5C3317', marginBottom: '8px'}}>
+    <div style={{fontSize: '13px', fontWeight: '700', color: '#5C3317', marginBottom: '12px'}}>
       🧪 Matières premières nécessaires
     </div>
-    <table style={{width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '8px', overflow: 'hidden', border: '1px solid #E8D5C4'}}>
-      <thead>
-        <tr style={{background: '#5C3317'}}>
-          <th style={{padding: '7px 12px', textAlign: 'left', fontSize: '11px', color: 'white', textTransform: 'uppercase'}}>Matière première</th>
-          <th style={{padding: '7px 12px', textAlign: 'left', fontSize: '11px', color: 'white', textTransform: 'uppercase'}}>Quantité totale</th>
-          <th style={{padding: '7px 12px', textAlign: 'left', fontSize: '11px', color: 'white', textTransform: 'uppercase'}}>Statut</th>
-        </tr>
-      </thead>
-      <tbody>
-        {besoins.map((b, i) => (
-          <tr key={i} style={{borderBottom: '1px solid #F5EDE6'}}>
-            <td style={{padding: '7px 12px', fontSize: '13px'}}>{b.matiere_premiere}</td>
-            <td style={{padding: '7px 12px', fontSize: '13px', fontWeight: '600', color: '#5C3317'}}>{b.quantite_necessaire} {b.unite}</td>
-            <td style={{padding: '7px 12px'}}>
-              {b.manque
-                ? <span style={{background: '#FFEEEE', color: '#CC0000', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: '600'}}>⚠️ Stock insuffisant</span>
-                : <span style={{background: '#EAF3DE', color: '#3B6D11', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: '600'}}>✅ OK</span>
-              }
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    {besoins.map((item, idx) => (
+      <div key={idx} style={{marginBottom: '12px', background: 'white', borderRadius: '10px', border: '1px solid #E8D5C4', overflow: 'hidden'}}>
+        <div style={{background: '#F5EDE6', padding: '8px 12px', fontSize: '12px', fontWeight: '700', color: '#5C3317', borderBottom: '1px solid #E8D5C4'}}>
+          📦 {item.produit} (×{item.quantite_commandee})
+        </div>
+        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+          <thead>
+            <tr style={{background: '#5C3317'}}>
+              <th style={{padding: '6px 12px', textAlign: 'left', fontSize: '11px', color: 'white', textTransform: 'uppercase'}}>Matière première</th>
+              <th style={{padding: '6px 12px', textAlign: 'left', fontSize: '11px', color: 'white', textTransform: 'uppercase'}}>Quantité totale</th>
+              <th style={{padding: '6px 12px', textAlign: 'left', fontSize: '11px', color: 'white', textTransform: 'uppercase'}}>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            {item.besoins.map((b, i) => (
+              <tr key={i} style={{borderBottom: '1px solid #F5EDE6'}}>
+                <td style={{padding: '7px 12px', fontSize: '12px'}}>{b.matiere_premiere}</td>
+                <td style={{padding: '7px 12px', fontSize: '12px', fontWeight: '600', color: '#5C3317'}}>{b.quantite_necessaire} {b.unite}</td>
+                <td style={{padding: '7px 12px'}}>
+                  {b.manque
+                    ? <span style={{background: '#FFEEEE', color: '#CC0000', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: '600'}}>⚠️ Insuffisant</span>
+                    : <span style={{background: '#EAF3DE', color: '#3B6D11', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: '600'}}>✅ OK</span>
+                  }
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ))}
   </div>
 )}
 
