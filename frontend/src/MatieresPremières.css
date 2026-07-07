@@ -1,0 +1,58 @@
+.mp-page { padding: 0 0 2rem; }
+.mp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; }
+.mp-title { font-size: 22px; font-weight: 700; color: #5C3317; }
+.btn-ajouter { background: #5C3317; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; }
+.btn-ajouter:hover { background: #7A4828; }
+
+.mp-onglets { display: flex; gap: 8px; margin-bottom: 1rem; }
+.onglet-btn { background: white; border: 1.5px solid #E8D5C4; color: #7A4828; padding: 8px 18px; border-radius: 99px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit; }
+.onglet-btn.active { background: #5C3317; color: white; border-color: #5C3317; font-weight: 700; }
+
+.form-card { background: white; border: 1.5px solid #E8D5C4; border-radius: 14px; padding: 20px; margin-bottom: 1rem; }
+.form-title { font-size: 15px; font-weight: 700; color: #5C3317; margin-bottom: 1rem; }
+.form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 12px; font-weight: 600; color: #7A4828; }
+.form-group input, .form-group select { border: 1.5px solid #E8D5C4; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-family: inherit; outline: none; }
+.form-group input:focus, .form-group select:focus { border-color: #5C3317; }
+.form-actions { display: flex; gap: 8px; }
+.btn-save { background: #5C3317; color: white; border: none; padding: 9px 20px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; }
+.btn-cancel { background: transparent; color: #7A4828; border: 1.5px solid #E8D5C4; padding: 9px 20px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; }
+
+.ingredients-titre { font-size: 13px; font-weight: 600; color: #5C3317; margin-bottom: 8px; margin-top: 1rem; }
+.ingredient-row { display: grid; grid-template-columns: 1fr 120px 36px; gap: 8px; margin-bottom: 8px; align-items: center; }
+.ingredient-row select, .ingredient-row input { border: 1.5px solid #E8D5C4; border-radius: 8px; padding: 7px 10px; font-size: 13px; font-family: inherit; outline: none; }
+.btn-supprimer { background: #FFEEEE; color: #CC0000; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; padding: 7px; }
+.btn-add-ingredient { background: #F5EDE6; color: #5C3317; border: 1px dashed #A0785A; padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 500; }
+
+.mp-table-wrap { background: white; border-radius: 14px; border: 1px solid #E8D5C4; overflow: hidden; }
+.mp-table { width: 100%; border-collapse: collapse; }
+.mp-table thead tr { background: #5C3317; }
+.mp-table th { padding: 10px 16px; text-align: left; font-size: 12px; font-weight: 700; color: white; text-transform: uppercase; }
+.mp-table tbody tr { border-bottom: 1px solid #F5EDE6; }
+.mp-table tbody tr:hover { background: #FBF6F2; }
+.mp-table td { padding: 10px 16px; font-size: 13px; color: #2C1A0E; }
+.row-alerte { background: #FFF9F5 !important; }
+.td-nom { font-weight: 500; }
+.stock-input { width: 80px; border: 1.5px solid #E8D5C4; border-radius: 6px; padding: 4px 8px; font-size: 13px; font-family: inherit; text-align: center; }
+.statut-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px; }
+.statut-badge.vert { background: #EAF3DE; color: #3B6D11; }
+.statut-badge.rouge { background: #FFEEEE; color: #CC0000; }
+
+.recettes-list { display: flex; flex-direction: column; gap: 12px; }
+.recette-card { background: white; border: 1px solid #E8D5C4; border-radius: 14px; padding: 16px; }
+.recette-header { margin-bottom: 12px; }
+.recette-nom { font-size: 15px; font-weight: 700; color: #5C3317; }
+.recette-grammage { font-size: 12px; color: #A0785A; margin-top: 3px; }
+.recette-table { width: 100%; border-collapse: collapse; }
+.recette-table th { background: #F5EDE6; padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 700; color: #7A4828; text-transform: uppercase; }
+.recette-table td { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #F5EDE6; }
+.recette-table tr:last-child td { border-bottom: none; }
+
+.empty { text-align: center; padding: 3rem; font-size: 14px; color: #A0785A; font-style: italic; background: white; border-radius: 14px; border: 1px solid #E8D5C4; }
+.chargement { text-align: center; padding: 3rem; font-size: 15px; color: #A0785A; }
+
+@media (max-width: 768px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .ingredient-row { grid-template-columns: 1fr 80px 36px; }
+}

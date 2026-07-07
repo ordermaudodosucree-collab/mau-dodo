@@ -5,6 +5,7 @@ import Dashboard from './Dashboard';
 import Stocks from './Stocks';
 import Historique from './Historique';
 import { Toaster } from 'react-hot-toast';
+import MatieresPremières from './MatieresPremières';
 import './App.css';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
       {page === 'dashboard'  && <Dashboard />}
       {page === 'stocks'     && <Stocks />}
       {page === 'historique' && <Historique />}
+      {page === 'matieres' && <MatieresPremières />}
     </div>
   );
 }
