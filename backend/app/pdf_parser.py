@@ -9,6 +9,8 @@ def detecter_format(texte: str) -> str:
         return "purchase_order"
     if "Bon de commande" in texte or "EAN principal" in texte:
         return "tribeca"
+    if "Purchase Order" in texte and "Saint Aubin" in texte:
+        return "saint_aubin"
     return "inconnu"
 
 
@@ -163,7 +165,55 @@ def extraire_purchase_order(texte: str) -> dict:
         })
 
     return resultat
+def extraire_saint_aubin(texte: str) -> dict:
+    """Format Saint Aubin Distribution."""
+    resultat = {
+        "numero_commande": None, "client": None, "email_client": None,
+        "telephone_client": None, "date_commande": None, "date_livraison": None,
+        "montant_total": None, "produits": []
+    }
 
+    m = re.search(r'Purchase Order\s+(SAD\d+)', texte)
+    if m: resultat["numero_commande"] = m.group(1)
+
+    m = re.search(r'To\s*:\s*\w+\s+(.+?)(?:Date|$)', texte, re.MULTILINE)
+    if m: resultat["client"] = m.group(1).strip()
+
+    m = re.search(r'Date\s*:\s*(\d{2}/\d{2}/\d{4})', texte)
+    if m: resultat["date_commande"] = m.group(1)
+
+    m = re.search(r'Tel No\.:(\d+)', texte)
+    if m: resultat["telephone_client"] = m.group(1)
+
+    m = re.search(r'Purchase Total MUR\s+([\d,]+\.?\d*)', texte)
+    if m:
+        try:
+            resultat["montant_total"] = int(float(m.group(1).replace(',', '')))
+        except:
+            pass
+
+    lignes = texte.split('\n')
+    capture = False
+    for ligne in lignes:
+        if 'Item Description' in ligne:
+            capture = True
+            continue
+        if 'Purchase Total' in ligne:
+            capture = False
+            continue
+        if capture and ligne.strip():
+            m = re.match(r'^(.+?)\s+(\d+\.\d+)\s+UNI\s+[\d.]+\s+[\d,]+\.?\d*$', ligne.strip())
+            if m:
+                try:
+                    qte = int(float(m.group(2)))
+                except:
+                    qte = 0
+                resultat["produits"].append({
+                    "ean": None, "nom": m.group(1).strip(),
+                    "quantite": qte, "fait": False
+                })
+
+    return resultat
 
 def extraire_commande(pdf_chemin: str) -> dict:
     """
@@ -182,6 +232,8 @@ def extraire_commande(pdf_chemin: str) -> dict:
         return extraire_tribeca(texte, tableaux, words)
     elif format_pdf == "purchase_order":
         return extraire_purchase_order(texte)
+    elif format_pdf == "saint_aubin":
+        return extraire_saint_aubin(texte)
     else:
         # Format inconnu — tentative d'extraction générique
         return extraire_purchase_order(texte)
