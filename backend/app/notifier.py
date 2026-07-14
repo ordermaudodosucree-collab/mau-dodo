@@ -4,6 +4,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 import logging
+import resend
+
 
 log = logging.getLogger(__name__)
 
@@ -11,23 +13,20 @@ GMAIL_ADDRESS      = os.getenv("GMAIL_ADDRESS")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 NOTIFICATION_EMAIL = os.getenv("NOTIFICATION_EMAIL")
 
-
 def envoyer_email(sujet: str, corps: str):
-    """Envoie un email de notification."""
-    if not all([GMAIL_ADDRESS, GMAIL_APP_PASSWORD, NOTIFICATION_EMAIL]):
+    """Envoie un email de notification via Resend."""
+    if not all([NOTIFICATION_EMAIL, os.getenv("RESEND_API_KEY")]):
         log.warning("Variables email manquantes — notification ignorée")
         return False
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = sujet
-        msg["From"]    = GMAIL_ADDRESS
-        msg["To"]      = NOTIFICATION_EMAIL
-        msg.attach(MIMEText(corps, "html"))
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.ehlo()
-            server.starttls()
-            server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
-            server.sendmail(GMAIL_ADDRESS, NOTIFICATION_EMAIL, msg.as_string())
+        resend.api_key = os.getenv("RESEND_API_KEY")
+        params = {
+            "from": "Mau Dodo Sucrée <onboarding@resend.dev>",
+            "to": [NOTIFICATION_EMAIL],
+            "subject": sujet,
+            "html": corps
+        }
+        resend.Emails.send(params)
         log.info(f"Notification envoyée : {sujet}")
         return True
     except Exception as e:
