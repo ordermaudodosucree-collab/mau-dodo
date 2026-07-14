@@ -12,31 +12,33 @@ GMAIL_ADDRESS      = os.getenv("GMAIL_ADDRESS")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 NOTIFICATION_EMAIL = os.getenv("NOTIFICATION_EMAIL")
 
-def envoyer_email(sujet: str, corps: str):
-    """Envoie un email de notification via Brevo."""
-    if not all([NOTIFICATION_EMAIL, os.getenv("BREVO_API_KEY")]):
-        log.warning("Variables email manquantes — notification ignorée")
+
+def envoyer_notification(sujet: str, corps_texte: str):
+    """Envoie une notification via Telegram."""
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+
+    if not all([token, chat_id]):
+        log.warning("Variables Telegram manquantes — notification ignorée")
         return False
     try:
-        import sib_api_v3_sdk
-        from sib_api_v3_sdk.rest import ApiException
-
-        configuration = sib_api_v3_sdk.Configuration()
-        configuration.api_key['api-key'] = os.getenv("BREVO_API_KEY")
-
-        api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
-            sib_api_v3_sdk.ApiClient(configuration))
-
-        send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
-            to=[{"email": NOTIFICATION_EMAIL}],
-            sender={"name": "Mau Dodo Sucrée", "email": "ordermaudodosucree@gmail.com"},
-            subject=sujet,
-            html_content=corps
+        import requests
+        message = f"🍬 *Mau Dodo Sucrée*\n\n{sujet}\n\n{corps_texte}"
+        response = requests.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={
+                "chat_id": chat_id,
+                "text": message,
+                "parse_mode": "Markdown"
+            },
+            timeout=30
         )
-
-        api_instance.send_transac_email(send_smtp_email)
-        log.info(f"Notification envoyée : {sujet}")
-        return True
+        if response.status_code == 200:
+            log.info(f"Notification Telegram envoyée : {sujet}")
+            return True
+        else:
+            log.error(f"Erreur Telegram : {response.text}")
+            return False
     except Exception as e:
         log.error(f"Erreur envoi notification : {e}")
         return False
@@ -112,9 +114,9 @@ def notif_nouvelle_commande(commande):
       </div>
     </div>
     """
-    envoyer_email(
-        f"🆕 Nouvelle commande #{commande.reference} — Livraison prévue le {date_affichee}",
-        corps
+    envoyer_notification(
+        f"🆕 Nouvelle commande #{commande.reference}",
+        f"Client : {commande.client}\nLivraison prévue : {date_affichee}\nProduits : {len(commande.produits)}"
     )
 
 
@@ -142,7 +144,7 @@ def notif_rupture_stock(stock_nom: str, quantite: int, seuil: int):
       </div>
     </div>
     """
-    envoyer_email(
-        f"🚨 Rupture stock : {stock_nom} ({quantite} unités restantes)",
-        corps
+    envoyer_notification(
+        f"🚨 Rupture stock : {stock_nom}",
+        f"Stock actuel : {quantite} unités\nSeuil d'alerte : {seuil} unités"
     )
