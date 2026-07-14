@@ -14,35 +14,29 @@ NOTIFICATION_EMAIL = os.getenv("NOTIFICATION_EMAIL")
 
 
 def envoyer_notification(sujet: str, corps_texte: str):
-    """Envoie une notification via Telegram."""
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    """Envoie une notification via Discord Webhook."""
+    webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
 
-    if not all([token, chat_id]):
-        log.warning("Variables Telegram manquantes — notification ignorée")
+    if not webhook_url:
+        log.warning("DISCORD_WEBHOOK_URL manquante — notification ignorée")
         return False
     try:
         import requests
-        message = f"🍬 *Mau Dodo Sucrée*\n\n{sujet}\n\n{corps_texte}"
+        message = f"🍬 **Mau Dodo Sucrée**\n\n**{sujet}**\n{corps_texte}"
         response = requests.post(
-            f"https://api.telegram.org/bot{token}/sendMessage",
-            json={
-                "chat_id": chat_id,
-                "text": message,
-                "parse_mode": "Markdown"
-            },
+            webhook_url,
+            json={"content": message},
             timeout=30
         )
-        if response.status_code == 200:
-            log.info(f"Notification Telegram envoyée : {sujet}")
+        if response.status_code in [200, 204]:
+            log.info(f"Notification Discord envoyée : {sujet}")
             return True
         else:
-            log.error(f"Erreur Telegram : {response.text}")
+            log.error(f"Erreur Discord : {response.text}")
             return False
     except Exception as e:
         log.error(f"Erreur envoi notification : {e}")
         return False
-
 
 def notif_nouvelle_commande(commande):
     """Email quand une nouvelle commande est reçue.
