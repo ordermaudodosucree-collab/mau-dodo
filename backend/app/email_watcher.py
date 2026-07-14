@@ -113,8 +113,9 @@ def verifier_nouveaux_emails():
             log.info(f"📧 Email de : {expediteur} | Sujet : {sujet}")
 
             # Ignorer les emails automatiques Google
-            if any(x in expediteur for x in ["noreply-apps-scripts", "google.com", "googlemail.com"]):
-                log.info("Email automatique ignoré.")
+            EXPEDITEURS_IGNORES = ["noreply-apps-scripts", "noreply@", "no-reply@", "donotreply@"]
+            if any(x in expediteur.lower() for x in EXPEDITEURS_IGNORES):
+                log.info(f"Email automatique ignoré : {expediteur}")
                 mail.store(email_id, "+FLAGS", "\\Seen")
                 continue
 
