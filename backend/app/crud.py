@@ -292,7 +292,7 @@ def calculer_besoins(db: Session, commande_id: int):
                     "matiere_premiere": mp.nom,
                     "unite": mp.unite,
                     "quantite_necessaire": quantite_totale,
-                    "stock_disponible": mp.stock,
+                    "stock_disponible": mp.stock or 0,
                     "manque": (mp.stock or 0) < quantite_totale
                 })
 
