@@ -128,7 +128,32 @@ def verifier_nouveaux_emails():
 
             for nom_fichier, chemin_pdf in pdfs:
                 log.info(f"📄 PDF trouvé : {nom_fichier}")
-                envoyer_au_backend(nom_fichier, chemin_pdf)
+
+                def envoyer_au_backend(nom_fichier, chemin_pdf):
+                    for tentative in range(3):  # 3 essais
+                        try:
+                            with open(chemin_pdf, "rb") as f:
+                                response = requests.post(
+                                    f"{API_URL}/commandes",
+                                    files={"pdf": (nom_fichier, f, "application/pdf")},
+                                    timeout=120
+                                )
+                            if response.status_code == 200:
+                                data = response.json()
+                                log.info(f"Commande creee : {data['reference']} — {data['client']}")
+                                return True
+                            else:
+                                log.error(f"Erreur backend : {response.status_code} — {response.text}")
+                                return False
+                        except Exception as e:
+                            log.error(f"Tentative {tentative + 1}/3 echouee : {e}")
+                            if tentative < 2:
+                                import time
+                                time.sleep(10)  # attendre 10 secondes avant de réessayer
+                    return False
+                    finally:
+                    if os.path.exists(chemin_pdf):
+                        os.remove(chemin_pdf)
 
             # Marquer l'email comme lu
             mail.store(email_id, "+FLAGS", "\\Seen")
