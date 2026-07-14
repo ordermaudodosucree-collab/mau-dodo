@@ -180,11 +180,11 @@ async def creer_commande(
     try:
         data = extraire_commande(tmp_path)
         import logging
-        logging.error(f"PDF parsé: client={data.get('client')}, produits={len(data.get('produits', []))}")
+        logging.error(f"PDF parsé: client='{data.get('client')}', strip='{data.get('client', '').strip()}', produits={len(data.get('produits', []))}")
     except Exception as e:
         raise HTTPException(400, f"Erreur PDF: {e}")
 
-    if not data["client"] or not data["produits"]:
+    if not data.get("client", "").strip() or not data.get("produits"):
         raise HTTPException(status_code=400, detail="PDF invalide ou format non reconnu")
 
     # Créer la commande en base pour obtenir la référence
