@@ -4,7 +4,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 import logging
-import resend
 
 
 log = logging.getLogger(__name__)
@@ -14,19 +13,28 @@ GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 NOTIFICATION_EMAIL = os.getenv("NOTIFICATION_EMAIL")
 
 def envoyer_email(sujet: str, corps: str):
-    """Envoie un email de notification via Resend."""
-    if not all([NOTIFICATION_EMAIL, os.getenv("RESEND_API_KEY")]):
+    """Envoie un email de notification via Brevo."""
+    if not all([NOTIFICATION_EMAIL, os.getenv("BREVO_API_KEY")]):
         log.warning("Variables email manquantes — notification ignorée")
         return False
     try:
-        resend.api_key = os.getenv("RESEND_API_KEY")
-        params = {
-            "from": "Mau Dodo Sucrée <onboarding@resend.dev>",
-            "to": [NOTIFICATION_EMAIL],
-            "subject": sujet,
-            "html": corps
-        }
-        resend.Emails.send(params)
+        import sib_api_v3_sdk
+        from sib_api_v3_sdk.rest import ApiException
+
+        configuration = sib_api_v3_sdk.Configuration()
+        configuration.api_key['api-key'] = os.getenv("BREVO_API_KEY")
+
+        api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+            sib_api_v3_sdk.ApiClient(configuration))
+
+        send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+            to=[{"email": NOTIFICATION_EMAIL}],
+            sender={"name": "Mau Dodo Sucrée", "email": "ordermaudodosucree@gmail.com"},
+            subject=sujet,
+            html_content=corps
+        )
+
+        api_instance.send_transac_email(send_smtp_email)
         log.info(f"Notification envoyée : {sujet}")
         return True
     except Exception as e:
