@@ -455,9 +455,14 @@ def creer_recette(recette: schemas.RecetteCreate, db: Session = Depends(get_db))
 
 @app.get("/commandes/{commande_id}/besoins")
 def calculer_besoins(commande_id: int, db: Session = Depends(get_db)):
-    """Calcule les matieres premieres necessaires pour une commande."""
-    besoins = crud.calculer_besoins(db, commande_id)
-    return besoins
+    try:
+        besoins = crud.calculer_besoins(db, commande_id)
+        return besoins
+    except Exception as e:
+        import logging, traceback
+        logging.error(f"Erreur besoins: {e}")
+        logging.error(traceback.format_exc())
+        return []
 
 
 @app.get("/debug/tables")
