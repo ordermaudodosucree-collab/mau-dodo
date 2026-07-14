@@ -179,8 +179,10 @@ async def creer_commande(
     # Extraire les infos du PDF
     try:
         data = extraire_commande(tmp_path)
+        import logging
+        logging.error(f"PDF parsé: client={data.get('client')}, produits={len(data.get('produits', []))}")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erreur lecture PDF: {str(e)}")
+        raise HTTPException(400, f"Erreur PDF: {e}")
 
     if not data["client"] or not data["produits"]:
         raise HTTPException(status_code=400, detail="PDF invalide ou format non reconnu")
