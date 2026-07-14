@@ -62,23 +62,38 @@ export default function Kanban() {
   };
 
   const toggleProduit = async (e, produitId, fait) => {
-    try {
-      await axios.patch(`${API}/produits/${produitId}`, { fait });
-      setCommandes(prev => prev.map(c => {
-        if (c.id === activeId) {
-          return {
-            ...c,
-            produits: c.produits.map(p =>
-              p.id === produitId ? { ...p, fait } : p
-            )
-          };
-        }
-        return c;
-      }));
-    } catch (e) {
-      toast.error('Erreur mise à jour produit');
+  // Mettre à jour immédiatement l'interface
+  setCommandes(prev => prev.map(c => {
+    if (c.id === activeId) {
+      return {
+        ...c,
+        produits: c.produits.map(p =>
+          p.id === produitId ? { ...p, fait } : p
+        )
+      };
     }
-  };
+    return c;
+  }));
+
+  // Ensuite envoyer au serveur
+  try {
+    await axios.patch(`${API}/produits/${produitId}`, { fait });
+  } catch (e) {
+    // En cas d'erreur, annuler le changement
+    setCommandes(prev => prev.map(c => {
+      if (c.id === activeId) {
+        return {
+          ...c,
+          produits: c.produits.map(p =>
+            p.id === produitId ? { ...p, fait: !fait } : p
+          )
+        };
+      }
+      return c;
+    }));
+    toast.error('Erreur mise à jour produit');
+  }
+};
 
   const changerStatut = async (reference, statut) => {
     try {
