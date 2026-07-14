@@ -2,7 +2,6 @@ import imaplib
 import email
 import os
 import time
-import shutil
 import requests
 import logging
 from email.header import decode_header
@@ -20,9 +19,12 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
+# Expéditeurs à ignorer
+EXPEDITEURS_IGNORES = ["noreply-apps-scripts", "noreply@", "no-reply@", "donotreply@"]
+
 
 def decoder(valeur):
-    """Décode les en-têtes d'email (sujet, expéditeur...)"""
+    """Décode les en-têtes d'email."""
     if not valeur:
         return ""
     parties = decode_header(valeur)
@@ -64,23 +66,27 @@ def extraire_pdfs(msg):
 
 
 def envoyer_au_backend(nom_fichier, chemin_pdf):
-    """Envoie le PDF au backend FastAPI pour créer la commande."""
+    """Envoie le PDF au backend FastAPI avec retry."""
     try:
-        with open(chemin_pdf, "rb") as f:
-            response = requests.post(
-                f"{API_URL}/commandes",
-                files={"pdf": (nom_fichier, f, "application/pdf")},
-                timeout=30
-            )
-        if response.status_code == 200:
-            data = response.json()
-            log.info(f"✅ Commande créée : {data['reference']} — {data['client']}")
-            return True
-        else:
-            log.error(f"❌ Erreur backend : {response.status_code} — {response.text}")
-            return False
-    except Exception as e:
-        log.error(f"❌ Erreur envoi backend : {e}")
+        for tentative in range(3):
+            try:
+                with open(chemin_pdf, "rb") as f:
+                    response = requests.post(
+                        f"{API_URL}/commandes",
+                        files={"pdf": (nom_fichier, f, "application/pdf")},
+                        timeout=120
+                    )
+                if response.status_code == 200:
+                    data = response.json()
+                    log.info(f"Commande creee : {data['reference']} — {data['client']}")
+                    return True
+                else:
+                    log.error(f"Erreur backend : {response.status_code} — {response.text}")
+                    return False
+            except Exception as e:
+                log.error(f"Tentative {tentative + 1}/3 echouee : {e}")
+                if tentative < 2:
+                    time.sleep(10)
         return False
     finally:
         if os.path.exists(chemin_pdf):
@@ -93,7 +99,6 @@ def verifier_nouveaux_emails():
         mail = connecter_gmail()
         mail.select("inbox")
 
-        # Chercher les emails non lus
         _, messages = mail.search(None, "UNSEEN")
         ids = messages[0].split()
 
@@ -112,8 +117,7 @@ def verifier_nouveaux_emails():
             expediteur = decoder(msg.get("From", ""))
             log.info(f"📧 Email de : {expediteur} | Sujet : {sujet}")
 
-            # Ignorer les emails automatiques Google
-            EXPEDITEURS_IGNORES = ["noreply-apps-scripts", "noreply@", "no-reply@", "donotreply@"]
+            # Ignorer les emails automatiques
             if any(x in expediteur.lower() for x in EXPEDITEURS_IGNORES):
                 log.info(f"Email automatique ignoré : {expediteur}")
                 mail.store(email_id, "+FLAGS", "\\Seen")
@@ -128,32 +132,7 @@ def verifier_nouveaux_emails():
 
             for nom_fichier, chemin_pdf in pdfs:
                 log.info(f"📄 PDF trouvé : {nom_fichier}")
-
-                def envoyer_au_backend(nom_fichier, chemin_pdf):
-                    for tentative in range(3):  # 3 essais
-                        try:
-                            with open(chemin_pdf, "rb") as f:
-                                response = requests.post(
-                                    f"{API_URL}/commandes",
-                                    files={"pdf": (nom_fichier, f, "application/pdf")},
-                                    timeout=120
-                                )
-                            if response.status_code == 200:
-                                data = response.json()
-                                log.info(f"Commande creee : {data['reference']} — {data['client']}")
-                                return True
-                            else:
-                                log.error(f"Erreur backend : {response.status_code} — {response.text}")
-                                return False
-                        except Exception as e:
-                            log.error(f"Tentative {tentative + 1}/3 echouee : {e}")
-                            if tentative < 2:
-                                import time
-                                time.sleep(10)  # attendre 10 secondes avant de réessayer
-                    return False
-                    finally:
-                    if os.path.exists(chemin_pdf):
-                        os.remove(chemin_pdf)
+                envoyer_au_backend(nom_fichier, chemin_pdf)
 
             # Marquer l'email comme lu
             mail.store(email_id, "+FLAGS", "\\Seen")
@@ -161,13 +140,13 @@ def verifier_nouveaux_emails():
         mail.logout()
 
     except Exception as e:
-        log.error(f"❌ Erreur connexion Gmail : {e}")
+        log.error(f"Erreur connexion Gmail : {e}")
 
 
 def demarrer():
     """Lance la surveillance en boucle."""
-    log.info(f"🚀 Démarrage surveillance Gmail : {GMAIL_ADDRESS}")
-    log.info(f"🔄 Vérification toutes les {CHECK_INTERVAL // 60} minutes")
+    log.info(f"Démarrage surveillance Gmail : {GMAIL_ADDRESS}")
+    log.info(f"Vérification toutes les {CHECK_INTERVAL // 60} minutes")
 
     while True:
         verifier_nouveaux_emails()
