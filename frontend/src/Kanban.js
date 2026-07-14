@@ -73,14 +73,30 @@ console.log('Erreur besoins:', e);
   };
 
   const toggleProduit = async (e, produitId, fait) => {
-    e.stopPropagation();
-    try {
-      await axios.patch(`${API}/produits/${produitId}`, { fait });
-      await chargerCommandes();
-    } catch (e) {
-      toast.error('Erreur mise à jour produit');
-    }
-  };
+  try {
+    await axios.patch(`${API}/produits/${produitId}`, { fait });
+    // Mettre à jour localement sans refresh
+    setCommandes(prev => prev.map(c => {
+      if (c.id === commandeActive?.id) {
+        return {
+          ...c,
+          produits: c.produits.map(p =>
+            p.id === produitId ? { ...p, fait } : p
+          )
+        };
+      }
+      return c;
+    }));
+    setCommandeActive(prev => prev ? {
+      ...prev,
+      produits: prev.produits.map(p =>
+        p.id === produitId ? { ...p, fait } : p
+      )
+    } : null);
+  } catch (e) {
+    toast.error('Erreur mise à jour produit');
+  }
+};
 
   const commandesFiltrees = commandes.filter(c => {
     if (!recherche) return true;
