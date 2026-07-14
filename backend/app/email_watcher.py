@@ -112,6 +112,12 @@ def verifier_nouveaux_emails():
             expediteur = decoder(msg.get("From", ""))
             log.info(f"📧 Email de : {expediteur} | Sujet : {sujet}")
 
+            # Ignorer les emails automatiques Google
+            if any(x in expediteur for x in ["noreply-apps-scripts", "google.com", "googlemail.com"]):
+                log.info("Email automatique ignoré.")
+                mail.store(email_id, "+FLAGS", "\\Seen")
+                continue
+
             # Extraire les PDFs
             pdfs = extraire_pdfs(msg)
 
