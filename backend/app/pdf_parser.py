@@ -5,12 +5,12 @@ from collections import defaultdict
 
 def detecter_format(texte: str) -> str:
     """Détecte le format du PDF."""
+    if "Saint Aubin" in texte and "Purchase Order" in texte:
+        return "saint_aubin"
     if "PURCHASE ORDER" in texte or "Order NO." in texte:
         return "purchase_order"
     if "Bon de commande" in texte or "EAN principal" in texte:
         return "tribeca"
-    if "Purchase Order" in texte and "Saint Aubin" in texte:
-        return "saint_aubin"
     return "inconnu"
 
 
@@ -18,8 +18,8 @@ def extraire_tribeca(texte: str, tableaux: list, words: list) -> dict:
     """Format Tribeca/Winners — avec EAN-13."""
     resultat = {
         "numero_commande": None, "client": None, "email_client": None,
-        "telephone_client": None, "date_commande": None, "date_livraison": None, "montant_total": None,
-        "produits": []
+        "telephone_client": None, "date_commande": None, "date_livraison": None,
+        "montant_total": None, "produits": []
     }
 
     texte_propre = re.sub(r'([A-Za-z°])\1', r'\1', texte)
@@ -115,8 +115,8 @@ def extraire_purchase_order(texte: str) -> dict:
     """Format Purchase Order (hôtels, restaurants...)"""
     resultat = {
         "numero_commande": None, "client": None, "email_client": None,
-        "telephone_client": None, "date_commande": None, "date_livraison": None, "montant_total": None,
-        "produits": []
+        "telephone_client": None, "date_commande": None, "date_livraison": None,
+        "montant_total": None, "produits": []
     }
 
     m = re.search(r'Order NO\.\s*:\s*([\w\s]+?)(?:\n|DATE)', texte)
@@ -134,7 +134,6 @@ def extraire_purchase_order(texte: str) -> dict:
     m = re.search(r'Delivery Date\s*:\s*(\d{2}/\d{2}/\d{4})', texte)
     if m: resultat["date_livraison"] = m.group(1)
 
-    # Montant total Purchase Order
     m = re.search(r'Net Total.*?([\d,]+\.?\d*)', texte)
     if m:
         try:
@@ -142,31 +141,22 @@ def extraire_purchase_order(texte: str) -> dict:
         except:
             pass
 
-    # Montant total Tribeca
-    m = re.search(r'Montant achat\s+([\d\s]+\.?\d*)\s*MUR', texte_propre)
-    if m:
-        try:
-            resultat["montant_total"] = int(float(m.group(1).replace(' ', '').replace(',', '')))
-        except:
-            pass
-
     pattern = re.compile(r'^\d+\s+\d+\s+(.+?)\s+(\d+(?:\.\d+)?)\s+EA\s', re.MULTILINE)
     for m in pattern.finditer(texte):
-        nom = m.group(1).strip()
         try:
             qte = int(float(m.group(2)))
         except:
             qte = 0
         resultat["produits"].append({
-            "ean": None,
-            "nom": nom,
-            "quantite": qte,
-            "fait": False
+            "ean": None, "nom": m.group(1).strip(),
+            "quantite": qte, "fait": False
         })
 
     return resultat
+
+
 def extraire_saint_aubin(texte: str) -> dict:
-    """Format Saint Aubin Distribution."""
+    """Format Saint Aubin Distribution Ltée."""
     resultat = {
         "numero_commande": None, "client": None, "email_client": None,
         "telephone_client": None, "date_commande": None, "date_livraison": None,
@@ -215,14 +205,15 @@ def extraire_saint_aubin(texte: str) -> dict:
 
     return resultat
 
+
 def extraire_commande(pdf_chemin: str) -> dict:
     """
     Lit un bon de commande PDF et retourne un dictionnaire structuré.
-    Supporte plusieurs formats : Tribeca/Winners, Purchase Order (hôtels).
+    Supporte : Tribeca/Winners, Purchase Order, Saint Aubin Distribution.
     """
     with pdfplumber.open(pdf_chemin) as pdf:
         page = pdf.pages[0]
-        texte = page.extract_text()
+        texte = page.extract_text() or ""
         tableaux = page.extract_tables()
         words = page.extract_words()
 
@@ -230,13 +221,16 @@ def extraire_commande(pdf_chemin: str) -> dict:
 
     if format_pdf == "tribeca":
         return extraire_tribeca(texte, tableaux, words)
-    elif format_pdf == "purchase_order":
-        return extraire_purchase_order(texte)
     elif format_pdf == "saint_aubin":
         return extraire_saint_aubin(texte)
-    else:
-        # Format inconnu — tentative d'extraction générique
+    elif format_pdf == "purchase_order":
         return extraire_purchase_order(texte)
+    else:
+        return {
+            "numero_commande": None, "client": None, "email_client": None,
+            "telephone_client": None, "date_commande": None, "date_livraison": None,
+            "montant_total": None, "produits": []
+        }
 
 
 if __name__ == "__main__":
