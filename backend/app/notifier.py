@@ -23,7 +23,9 @@ def envoyer_email(sujet: str, corps: str):
         msg["From"]    = GMAIL_ADDRESS
         msg["To"]      = NOTIFICATION_EMAIL
         msg.attach(MIMEText(corps, "html"))
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.ehlo()
+            server.starttls()
             server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
             server.sendmail(GMAIL_ADDRESS, NOTIFICATION_EMAIL, msg.as_string())
         log.info(f"Notification envoyée : {sujet}")
