@@ -482,3 +482,17 @@ def supprimer_recette(recette_id: int, db: Session = Depends(get_db)):
         return {"message": "Recette supprimée"}
     except Exception as e:
         return {"error": str(e)}
+
+@app.delete("/commandes/{reference}")
+def supprimer_commande(reference: str, db: Session = Depends(get_db)):
+    try:
+        from sqlalchemy import text as sqltext
+        commande = crud.get_commande(db, reference)
+        if not commande:
+            raise HTTPException(status_code=404, detail="Commande introuvable")
+        db.execute(sqltext(f"DELETE FROM produits WHERE commande_id = {commande.id}"))
+        db.execute(sqltext(f"DELETE FROM commandes WHERE id = {commande.id}"))
+        db.commit()
+        return {"message": f"Commande {reference} supprimée"}
+    except Exception as e:
+        return {"error": str(e)}
