@@ -7,8 +7,7 @@ def detecter_format(texte: str) -> str:
     """Détecte le format du PDF."""
     import logging
     log = logging.getLogger(__name__)
-    log.error(f"Texte extrait (100 premiers chars): {repr(texte[:100])}")
-    if "Saint Aubin" in texte and "Purchase Order" in texte:
+    if "Saint Aubin" in texte and "SAD" in texte:
         log.error("Format détecté: saint_aubin")
         return "saint_aubin"
     if "PURCHASE ORDER" in texte or "Order NO." in texte:
@@ -17,6 +16,9 @@ def detecter_format(texte: str) -> str:
     if "Bon de commande" in texte or "EAN principal" in texte:
         log.error("Format détecté: tribeca")
         return "tribeca"
+    if "Purchase Order" in texte and "SAD" in texte:
+        log.error("Format détecté: saint_aubin (fallback)")
+        return "saint_aubin"
     log.error("Format détecté: inconnu")
     return "inconnu"
 
