@@ -11,9 +11,10 @@ log = logging.getLogger(__name__)
 # GÉNÉRER UNE RÉFÉRENCE UNIQUE
 # ──────────────────────────────────────────
 def generer_reference(db: Session) -> str:
-    total = db.query(database.Commande).count()
-    return f"CMD-{str(total + 1).zfill(4)}"
-
+    from sqlalchemy import text as sqltext
+    result = db.execute(sqltext("SELECT MAX(id) FROM commandes")).fetchone()
+    max_id = result[0] or 0
+    return f"CMD-{str(max_id + 1).zfill(4)}"
 
 # ──────────────────────────────────────────
 # COMMANDES
