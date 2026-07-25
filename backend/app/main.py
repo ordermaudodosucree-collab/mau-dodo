@@ -195,6 +195,7 @@ async def creer_commande(
         numero_commande=data.get("numero_commande"),
         date_commande=data.get("date_commande"),
         date_livraison=data.get("date_livraison"),
+        montant_total=data.get("montant_total"),
         produits=[schemas.ProduitCreate(**p) for p in data["produits"]]
     )
 
