@@ -103,7 +103,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app = FastAPI(title="Kanban Commandes API")
 
 # ──────────────────────────────────────────
 # WEBSOCKETS — mises à jour temps réel
