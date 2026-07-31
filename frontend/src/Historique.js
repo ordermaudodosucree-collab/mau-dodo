@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import './Historique.css';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const KEY = process.env.REACT_APP_API_SECRET_KEY || '';
 
 export default function Historique() {
   const [commandes, setCommandes]     = useState([]);
@@ -13,7 +14,7 @@ export default function Historique() {
 
   const chargerCommandes = useCallback(async () => {
     try {
-      const res = await axios.get(`${API}/commandes`);
+      const res = await axios.get(`${API}/commandes?key=${KEY}`);
       const livrees = res.data.filter(c => c.statut === 'livre');
       setCommandes(livrees);
     } catch (e) {

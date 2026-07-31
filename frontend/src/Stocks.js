@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import './Stocks.css';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const KEY = process.env.REACT_APP_API_SECRET_KEY || '';
 
 export default function Stocks() {
   const [stocks, setStocks]             = useState([]);
@@ -23,7 +24,7 @@ export default function Stocks() {
 
   const chargerStocks = useCallback(async () => {
     try {
-      const res = await axios.get(`${API}/stocks`);
+      const res = await axios.get(`${API}/stocks?key=${KEY}`);
       setStocks(res.data);
     } catch (e) {
       toast.error('Impossible de charger les stocks');
@@ -37,7 +38,7 @@ export default function Stocks() {
   const ajouterStock = async () => {
     if (!formNom.trim()) { toast.error('Le nom est obligatoire'); return; }
     try {
-      await axios.post(`${API}/stocks`, {
+      await axios.post(`${API}/stocks?key=${KEY}`, {
         nom: formNom, ean: formEan || null,
         quantite: parseInt(formQte) || 0,
         seuil_alerte: parseInt(formSeuil) || 50
@@ -54,7 +55,7 @@ export default function Stocks() {
   const faireMouvement = async () => {
     if (!mouvQte || mouvQte <= 0) { toast.error('Quantité invalide'); return; }
     try {
-      await axios.post(`${API}/stocks/${mouvementId}/${mouvementType}`, {
+      await axios.post(`${API}/stocks/${mouvementId}/${mouvementType}?key=${KEY}`, {
         type: mouvementType,
         quantite: parseInt(mouvQte),
         motif: mouvMotif || null
@@ -69,7 +70,7 @@ export default function Stocks() {
 
   const majSeuil = async (stockId, seuil) => {
     try {
-      await axios.patch(`${API}/stocks/${stockId}`, { seuil_alerte: parseInt(seuil) });
+      await axios.patch(`${API}/stocks/${stockId}?key=${KEY}`, { seuil_alerte: parseInt(seuil) });
       chargerStocks();
     } catch (e) {
       toast.error('Erreur mise à jour seuil');
@@ -112,7 +113,6 @@ export default function Stocks() {
         {recherche && <button onClick={() => setRecherche('')}>✕</button>}
       </div>
 
-      {/* FORMULAIRE AJOUT */}
       {showAjouter && (
         <div className="form-card">
           <h3 className="form-title">Nouveau produit en stock</h3>
@@ -143,7 +143,6 @@ export default function Stocks() {
         </div>
       )}
 
-      {/* FORMULAIRE MOUVEMENT */}
       {mouvementId && (
         <div className="form-card">
           <h3 className="form-title">
@@ -177,7 +176,6 @@ export default function Stocks() {
         </div>
       )}
 
-      {/* TABLEAU STOCKS */}
       {stocksFiltres.length === 0 ? (
         <div className="empty-stocks">
           {recherche ? 'Aucun produit trouvé' : 'Aucun produit en stock — cliquez sur "+ Ajouter un produit"'}

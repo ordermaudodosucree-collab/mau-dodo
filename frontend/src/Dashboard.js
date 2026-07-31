@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import './Dashboard.css';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const KEY = process.env.REACT_APP_API_SECRET_KEY || '';
 
 export default function Dashboard() {
   const [stats, setStats]       = useState(null);
@@ -13,7 +14,7 @@ export default function Dashboard() {
   const chargerStats = useCallback(async () => {
     try {
       setChargement(true);
-      const res = await axios.get(`${API}/dashboard?periode=${periode}`);
+      const res = await axios.get(`${API}/dashboard?periode=${periode}&key=${KEY}`);
       setStats(res.data);
     } catch (e) {
       toast.error('Impossible de charger le dashboard');
@@ -22,12 +23,11 @@ export default function Dashboard() {
     }
   }, [periode]);
 
-useEffect(() => {
-  chargerStats();
-  // Rafraîchissement automatique toutes les 30 secondes
-  const interval = setInterval(chargerStats, 30000);
-  return () => clearInterval(interval);
-}, [chargerStats]);
+  useEffect(() => {
+    chargerStats();
+    const interval = setInterval(chargerStats, 30000);
+    return () => clearInterval(interval);
+  }, [chargerStats]);
 
   const formatCA = (montant) => {
     if (!montant) return '0 MUR';
@@ -42,7 +42,6 @@ useEffect(() => {
 
   return (
     <div className="dashboard">
-      {/* HEADER */}
       <div className="dash-header">
         <h2 className="dash-title">📊 Dashboard</h2>
         <div className="periode-selector">
@@ -58,7 +57,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* KPI CARDS */}
       <div className="kpi-grid">
         <div className="kpi-card kpi-brun">
           <div className="kpi-icon">💰</div>
@@ -87,7 +85,6 @@ useEffect(() => {
       </div>
 
       <div className="dash-grid">
-        {/* GRAPHIQUE CA PAR JOUR */}
         <div className="dash-card">
           <h3 className="dash-card-title">CA par jour (30 derniers jours)</h3>
           {stats?.ca_par_jour?.length === 0 ? (
@@ -109,7 +106,6 @@ useEffect(() => {
           )}
         </div>
 
-        {/* TOP CLIENTS */}
         <div className="dash-card">
           <h3 className="dash-card-title">🏆 Top 5 clients</h3>
           {stats?.top_clients?.length === 0 ? (
@@ -127,7 +123,6 @@ useEffect(() => {
           )}
         </div>
 
-        {/* STOCKS EN ALERTE */}
         <div className="dash-card">
           <h3 className="dash-card-title">🚨 Alertes stock</h3>
           {stats?.stocks_bas?.length === 0 ? (

@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import './Kanban.css';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const KEY = process.env.REACT_APP_API_SECRET_KEY || '';
 
 const STATUTS = [
   { key: 'recu',       label: 'Commande reçue',  classe: 'col-recu',  badge: 'b-brun',  couleur: '#5C3317' },
@@ -21,7 +22,7 @@ export default function Kanban() {
 
   const chargerCommandes = useCallback(async () => {
     try {
-      const res = await axios.get(`${API}/commandes`);
+      const res = await axios.get(`${API}/commandes?key=${KEY}`);
       setCommandes(res.data);
     } catch (e) {
       toast.error('Impossible de charger les commandes');
@@ -44,7 +45,7 @@ export default function Kanban() {
 
   const chargerBesoins = async (commandeId) => {
     try {
-      const res = await axios.get(`${API}/commandes/${commandeId}/besoins`);
+      const res = await axios.get(`${API}/commandes/${commandeId}/besoins?key=${KEY}`);
       setBesoins(res.data);
     } catch (e) {
       setBesoins([]);
@@ -62,42 +63,38 @@ export default function Kanban() {
   };
 
   const toggleProduit = async (e, produitId, fait) => {
-  // Mettre à jour immédiatement l'interface
-  setCommandes(prev => prev.map(c => {
-    if (c.id === activeId) {
-      return {
-        ...c,
-        produits: c.produits.map(p =>
-          p.id === produitId ? { ...p, fait } : p
-        )
-      };
-    }
-    return c;
-  }));
-
-  // Ensuite envoyer au serveur
-  try {
-    await axios.patch(`${API}/produits/${produitId}`, { fait });
-  } catch (e) {
-    // En cas d'erreur, annuler le changement
     setCommandes(prev => prev.map(c => {
       if (c.id === activeId) {
         return {
           ...c,
           produits: c.produits.map(p =>
-            p.id === produitId ? { ...p, fait: !fait } : p
+            p.id === produitId ? { ...p, fait } : p
           )
         };
       }
       return c;
     }));
-    toast.error('Erreur mise à jour produit');
-  }
-};
+    try {
+      await axios.patch(`${API}/produits/${produitId}?key=${KEY}`, { fait });
+    } catch (e) {
+      setCommandes(prev => prev.map(c => {
+        if (c.id === activeId) {
+          return {
+            ...c,
+            produits: c.produits.map(p =>
+              p.id === produitId ? { ...p, fait: !fait } : p
+            )
+          };
+        }
+        return c;
+      }));
+      toast.error('Erreur mise à jour produit');
+    }
+  };
 
   const changerStatut = async (reference, statut) => {
     try {
-      await axios.patch(`${API}/commandes/${reference}/statut`, { statut });
+      await axios.patch(`${API}/commandes/${reference}/statut?key=${KEY}`, { statut });
       await chargerCommandes();
       setActiveId(null);
       setBesoins([]);
@@ -134,7 +131,6 @@ export default function Kanban() {
   };
 
   const statutInfo = (key) => STATUTS.find(s => s.key === key);
-
   const commandeActive = commandes.find(c => c.id === activeId) || null;
 
   const dateLivraisonPrevue = (dateReception) => {
@@ -206,7 +202,6 @@ export default function Kanban() {
         ))}
       </div>
 
-      {/* PANNEAU DETAIL */}
       {commandeActive && (
         <div className="overlay" onClick={fermer}>
           <div className="panel" onClick={e => e.stopPropagation()}>
@@ -233,7 +228,6 @@ export default function Kanban() {
               </div>
             </div>
 
-            {/* PRODUITS */}
             <div className="produits">
               <div className="produit-header">
                 <span>Produit</span><span>EAN</span><span>Qté</span>
@@ -256,7 +250,6 @@ export default function Kanban() {
               <div className="all-done">✅ Tous les produits prêts !</div>
             )}
 
-            {/* BESOINS MATIERES PREMIERES */}
             {besoins.length > 0 && (
               <div style={{marginTop: '1rem', borderTop: '1px solid #F0E8E0', paddingTop: '1rem'}}>
                 <div style={{fontSize: '13px', fontWeight: '700', color: '#5C3317', marginBottom: '12px'}}>
@@ -295,7 +288,6 @@ export default function Kanban() {
               </div>
             )}
 
-            {/* BOUTON ACTION */}
             {prochainStatut(commandeActive.statut) && (
               <button
                 className={`action-btn ${statutInfo(prochainStatut(commandeActive.statut).next)?.badge || ''}`}

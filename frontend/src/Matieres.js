@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import './Matieres.css';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const KEY = process.env.REACT_APP_API_SECRET_KEY || '';
 
 export default function Matieres() {
   const [matieres, setMatieres]               = useState([]);
@@ -26,8 +27,8 @@ export default function Matieres() {
   const charger = useCallback(async () => {
     try {
       const [mp, rec] = await Promise.all([
-        axios.get(`${API}/matieres-premieres`),
-        axios.get(`${API}/recettes`)
+        axios.get(`${API}/matieres-premieres?key=${KEY}`),
+        axios.get(`${API}/recettes?key=${KEY}`)
       ]);
       setMatieres(mp.data);
       setRecettes(rec.data);
@@ -43,7 +44,7 @@ export default function Matieres() {
   const ajouterMatiere = async () => {
     if (!formNom.trim()) { toast.error('Nom obligatoire'); return; }
     try {
-      await axios.post(`${API}/matieres-premieres`, {
+      await axios.post(`${API}/matieres-premieres?key=${KEY}`, {
         nom: formNom, unite: formUnite,
         stock: parseInt(formStock) || 0,
         seuil_alerte: parseInt(formSeuil) || 0
@@ -59,7 +60,7 @@ export default function Matieres() {
 
   const majStock = async (id, stock) => {
     try {
-      await axios.patch(`${API}/matieres-premieres/${id}`, { stock: parseInt(stock) });
+      await axios.patch(`${API}/matieres-premieres/${id}?key=${KEY}`, { stock: parseInt(stock) });
       charger();
     } catch (e) {
       toast.error('Erreur mise à jour stock');
@@ -68,7 +69,7 @@ export default function Matieres() {
 
   const supprimerRecette = async (id) => {
     try {
-      await axios.delete(`${API}/recettes/${id}`);
+      await axios.delete(`${API}/recettes/${id}?key=${KEY}`);
       toast.success('Recette supprimée !');
       setRecetteOuverte(null);
       charger();
@@ -95,7 +96,7 @@ export default function Matieres() {
     if (!recetteNom.trim()) { toast.error('Nom du produit obligatoire'); return; }
     if (recetteIngredients.length === 0) { toast.error('Ajouter au moins un ingrédient'); return; }
     try {
-      await axios.post(`${API}/recettes`, {
+      await axios.post(`${API}/recettes?key=${KEY}`, {
         produit_nom: recetteNom,
         grammage: parseInt(recetteGrammage),
         ingredients: recetteIngredients.map(i => ({
@@ -147,7 +148,6 @@ export default function Matieres() {
         </button>
       </div>
 
-      {/* FORMULAIRE MATIERE PREMIERE */}
       {showAjouter && onglet === 'matieres' && (
         <div className="form-card">
           <h3 className="form-title">Nouvelle matière première</h3>
@@ -182,7 +182,6 @@ export default function Matieres() {
         </div>
       )}
 
-      {/* FORMULAIRE RECETTE */}
       {showRecette && onglet === 'recettes' && (
         <div className="form-card">
           <h3 className="form-title">Nouvelle recette</h3>
@@ -226,7 +225,6 @@ export default function Matieres() {
         </div>
       )}
 
-      {/* LISTE MATIERES */}
       {onglet === 'matieres' && (
         <div className="mp-table-wrap">
           {matieres.length === 0 ? (
@@ -269,7 +267,6 @@ export default function Matieres() {
         </div>
       )}
 
-      {/* LISTE RECETTES — CARTES QUI S'OUVRENT */}
       {onglet === 'recettes' && (
         <div className="recettes-list">
           {recettes.length === 0 ? (
