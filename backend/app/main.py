@@ -12,6 +12,16 @@ from . import crud, schemas
 from .pdf_parser import extraire_commande
 from sqlalchemy import text as sqltext
 from .notifier import notif_nouvelle_commande, notif_rupture_stock
+from fastapi.security import APIKeyHeader
+from fastapi import Security
+
+API_SECRET_KEY = os.getenv("API_SECRET_KEY")
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+async def verifier_cle_api(api_key: str = Security(api_key_header)):
+    if API_SECRET_KEY and api_key != API_SECRET_KEY:
+        raise HTTPException(status_code=403, detail="Accès non autorisé")
+    return api_key
 
 
 # ──────────────────────────────────────────
@@ -93,7 +103,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app = FastAPI(title="Kanban Commandes API", dependencies=[Depends(verifier_cle_api)])
 
 # ──────────────────────────────────────────
 # WEBSOCKETS — mises à jour temps réel

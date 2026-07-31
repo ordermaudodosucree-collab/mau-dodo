@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import './Kanban.css';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+axios.defaults.headers.common['X-API-Key'] = process.env.REACT_APP_API_SECRET_KEY;
 
 const STATUTS = [
   { key: 'recu',       label: 'Commande reçue',  classe: 'col-recu',  badge: 'b-brun',  couleur: '#5C3317' },

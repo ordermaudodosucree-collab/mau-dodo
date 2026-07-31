@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import './Dashboard.css';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+axios.defaults.headers.common['X-API-Key'] = process.env.REACT_APP_API_SECRET_KEY;
 
 export default function Dashboard() {
   const [stats, setStats]       = useState(null);
