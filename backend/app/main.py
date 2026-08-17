@@ -145,8 +145,9 @@ async def websocket_endpoint(websocket: WebSocket):
 # ──────────────────────────────────────────
 
 @app.get("/")
-def root():
-    return {"message": "Mau Dodo Sucrée API opérationnelle 🍬"}
+def root(db: Session = Depends(get_db)):
+    db.execute(sqltext("SELECT 1"))
+    return {"message": "API opérationnelle"}
 
 @app.head("/")
 def root_head():
