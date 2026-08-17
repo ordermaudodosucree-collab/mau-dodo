@@ -72,9 +72,10 @@ def envoyer_au_backend(nom_fichier, chemin_pdf):
             with open(chemin_pdf, "rb") as f:
                 contenu = f.read()
 
+            API_KEY = os.getenv("API_SECRET_KEY", "")
             response = requests.post(
-                f"{API_URL}/commandes",
-                files={"pdf": (nom_fichier, contenu, "application/pdf")},
+                f"{API_URL}/commandes?key={API_KEY}",
+                files={"pdf": (nom_fichier, f, "application/pdf")},
                 timeout=120
             )
             if response.status_code == 200:
