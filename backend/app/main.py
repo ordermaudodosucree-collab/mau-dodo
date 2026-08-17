@@ -14,11 +14,14 @@ from sqlalchemy import text as sqltext
 from .notifier import notif_nouvelle_commande, notif_rupture_stock
 from fastapi.security import APIKeyHeader
 from fastapi import Security
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect, Response, Query, Security
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect, Response, Query, Request
+
 
 API_SECRET_KEY = os.getenv("API_SECRET_KEY")
 
-def verifier_cle_api(key: str = Query(None)):
+def verifier_cle_api(request: Request, key: str = Query(None)):
+    if request.url.path == "/":
+        return key
     if API_SECRET_KEY and key != API_SECRET_KEY:
         raise HTTPException(status_code=403, detail="Accès non autorisé")
     return key
